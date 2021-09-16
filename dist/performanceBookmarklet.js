@@ -1,5 +1,5 @@
 /* https://github.com/micmro/performance-bookmarklet by Michael Mrowetz @MicMro
-   build:09/12/2020 */
+   build:16/09/2021 */
 
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
@@ -70,7 +70,7 @@ var _default = legendComponent;
 exports["default"] = _default;
 
 
-},{"../helpers/dom":9}],2:[function(require,module,exports){
+},{"../helpers/dom":6}],2:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -133,29 +133,21 @@ navigationTimelineComponent.init = function () {
 
   _data["default"].measures.forEach(function (measure) {
     perfTimingCalc.blocks.push(_waterfall["default"].timeBlock("measure:" + measure.name, Math.round(measure.startTime), Math.round(measure.startTime + measure.duration), "block-custom-measure"));
-  });
+  }); // tableLogger.logTables([
+  // 	{name: "Navigation Timeline", data : perfTimingCalc.blocks, columns : ["name", "start", "end", "total"]},
+  // 	{name: "Navigation Events", data : perfTimingCalc.output},
+  // 	{name: "Marks", data : data.marks, columns : ["name", "startTime", "duration"]}
+  // ]);
 
-  _tableLogger["default"].logTables([{
-    name: "Navigation Timeline",
-    data: perfTimingCalc.blocks,
-    columns: ["name", "start", "end", "total"]
-  }, {
-    name: "Navigation Events",
-    data: perfTimingCalc.output
-  }, {
-    name: "Marks",
-    data: _data["default"].marks,
-    columns: ["name", "startTime", "duration"]
-  }]);
 
-  return _waterfall["default"].setupTimeLine(Math.round(perfTimingCalc.pageLoadTime), perfTimingCalc.blocks, _data["default"].marks, [], "Navigation Timing");
+  return _waterfall["default"].setupTimeLine(0, Math.round(perfTimingCalc.pageLoadTime), perfTimingCalc.blocks, _data["default"].marks, [], "Navigation Timing");
 };
 
 var _default = navigationTimelineComponent;
 exports["default"] = _default;
 
 
-},{"../data":8,"../helpers/tableLogger":16,"../helpers/waterfall":17}],3:[function(require,module,exports){
+},{"../data":5,"../helpers/tableLogger":12,"../helpers/waterfall":13}],3:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -235,139 +227,7 @@ var _default = pageMetricComponent;
 exports["default"] = _default;
 
 
-},{"../helpers/dom":9,"../helpers/persistance":12}],4:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports["default"] = void 0;
-
-var _data = _interopRequireDefault(require("../data"));
-
-var _helpers = _interopRequireDefault(require("../helpers/helpers"));
-
-var _dom = _interopRequireDefault(require("../helpers/dom"));
-
-var _pieChartHelpers = _interopRequireDefault(require("../helpers/pieChartHelpers"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
-/*
-Logic for Request analysis pie charts
-*/
-var pieChartComponent = {};
-
-pieChartComponent.init = function () {
-  var chartsHolder = _dom["default"].newTag("div", {
-    "class": "pie-charts-holder chart-holder"
-  }); // create a chart and table section
-
-
-  var setupChart = function setupChart(title, chartData, countTexts, columns, id) {
-    var chartHolder = _dom["default"].newTag("div", {
-      "class": "pie-chart-holder",
-      id: id || ""
-    });
-
-    chartHolder.appendChild(_dom["default"].newTag("h1", {
-      text: title
-    }));
-    chartHolder.appendChild(_pieChartHelpers["default"].createPieChart(chartData, 400));
-    chartHolder.appendChild(_dom["default"].newTag("p", {
-      text: "Total Requests: " + _data["default"].requestsOnly.length
-    }));
-
-    if (countTexts && countTexts.length) {
-      countTexts.forEach(function (countText) {
-        chartHolder.appendChild(_dom["default"].newTag("p", {
-          text: countText
-        }, "margin-top:-1em"));
-      });
-    }
-
-    chartHolder.appendChild(_pieChartHelpers["default"].createChartTable(title, chartData, columns));
-    chartsHolder.appendChild(chartHolder);
-  }; // init data for charts
-
-
-  var requestsUnit = _data["default"].requestsOnly.length / 100;
-  var colourRangeR = "789abcdef";
-  var colourRangeG = "789abcdef";
-  var colourRangeB = "789abcdef"; //argument data
-
-  var requestsByDomainData = _data["default"].requestsByDomain.map(function (sourceDomain) {
-    var domain = _helpers["default"].clone(sourceDomain);
-
-    domain.perc = domain.count / requestsUnit;
-    domain.label = domain.domain;
-
-    if (domain.domain === location.host) {
-      domain.colour = "#0c0";
-    } else if (domain.domain.split(".").slice(-2).join(".") === location.host.split(".").slice(-2).join(".")) {
-      domain.colour = "#0a0";
-    } else {
-      domain.colour = _helpers["default"].getRandomColor("56789abcdef", "01234567", "abcdef");
-    }
-
-    domain.id = "reqByDomain-" + domain.label.replace(/[^a-zA-Z]/g, "-");
-    domain.durationAverage = Math.round(domain.durationTotal / domain.count);
-    domain.durationTotal = Math.round(domain.durationTotal);
-    domain.durationTotalParallel = Math.round(domain.durationTotalParallel);
-    return domain;
-  });
-
-  setupChart("Requests by Domain", requestsByDomainData, ["Domains Total: " + _data["default"].requestsByDomain.length], [{
-    name: "Requests",
-    field: "count"
-  }, {
-    name: "Avg. Duration (ms)",
-    field: "durationAverage"
-  }, {
-    name: "Duration Parallel (ms)",
-    field: "durationTotalParallel"
-  }, {
-    name: "Duration Sum (ms)",
-    field: "durationTotal"
-  }], "pie-request-by-domain");
-  setupChart("Requests by Initiator Type", _data["default"].initiatorTypeCounts.map(function (initiatorType) {
-    initiatorType.perc = initiatorType.count / requestsUnit;
-    initiatorType.label = initiatorType.initiatorType;
-    initiatorType.colour = _helpers["default"].getInitiatorOrFileTypeColour(initiatorType.initiatorType, _helpers["default"].getRandomColor(colourRangeR, colourRangeG, colourRangeB));
-    initiatorType.id = "reqByInitiatorType-" + initiatorType.label.replace(/[^a-zA-Z]/g, "-");
-    return initiatorType;
-  }));
-  setupChart("Requests by Initiator Type (host/external domain)", _data["default"].initiatorTypeCountHostExt.map(function (initiatorype) {
-    var typeSegments = initiatorype.initiatorType.split(" ");
-    initiatorype.perc = initiatorype.count / requestsUnit;
-    initiatorype.label = initiatorype.initiatorType;
-    initiatorype.colour = _helpers["default"].getInitiatorOrFileTypeColour(typeSegments[0], _helpers["default"].getRandomColor(colourRangeR, colourRangeG, colourRangeB), typeSegments[1] !== "(host)");
-    initiatorype.id = "reqByInitiatorTypeLocEx-" + initiatorype.label.replace(/[^a-zA-Z]/g, "-");
-    return initiatorype;
-  }), ["Requests to Host: " + _data["default"].hostRequests, "Host: " + location.host]);
-  setupChart("Requests by File Type", _data["default"].fileTypeCounts.map(function (fileType) {
-    fileType.perc = fileType.count / requestsUnit;
-    fileType.label = fileType.fileType;
-    fileType.colour = _helpers["default"].getInitiatorOrFileTypeColour(fileType.fileType, _helpers["default"].getRandomColor(colourRangeR, colourRangeG, colourRangeB));
-    fileType.id = "reqByFileType-" + fileType.label.replace(/[^a-zA-Z]/g, "-");
-    return fileType;
-  }));
-  setupChart("Requests by File Type (host/external domain)", _data["default"].fileTypeCountHostExt.map(function (fileType) {
-    var typeSegments = fileType.fileType.split(" ");
-    fileType.perc = fileType.count / requestsUnit;
-    fileType.label = fileType.fileType;
-    fileType.colour = _helpers["default"].getInitiatorOrFileTypeColour(typeSegments[0], _helpers["default"].getRandomColor(colourRangeR, colourRangeG, colourRangeB), typeSegments[1] !== "(host)");
-    fileType.id = "reqByFileType-" + fileType.label.replace(/[^a-zA-Z]/g, "-");
-    return fileType;
-  }), ["Requests to Host: " + _data["default"].hostRequests, "Host: " + location.host]);
-  return chartsHolder;
-};
-
-var _default = pieChartComponent;
-exports["default"] = _default;
-
-
-},{"../data":8,"../helpers/dom":9,"../helpers/helpers":10,"../helpers/pieChartHelpers":13}],5:[function(require,module,exports){
+},{"../helpers/dom":6,"../helpers/persistance":9}],4:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -381,356 +241,214 @@ var _dom = _interopRequireDefault(require("../helpers/dom"));
 
 var _waterfall = _interopRequireDefault(require("../helpers/waterfall"));
 
-var _this = void 0;
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-var resourcesTimelineComponent = {};
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var getChartData = function getChartData(filter) {
-  var calc = {
-    pageLoadTime: _data["default"].perfTiming.loadEventEnd - _data["default"].perfTiming.responseStart,
-    lastResponseEnd: _data["default"].perfTiming.loadEventEnd - _data["default"].perfTiming.responseStart
-  };
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
-  for (var perfProp in _data["default"].perfTiming) {
-    if (_data["default"].perfTiming[perfProp] && typeof _data["default"].perfTiming[perfProp] === "number") {
-      calc[perfProp] = _data["default"].perfTiming[perfProp] - _data["default"].perfTiming.navigationStart;
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var ResourceTimelineComponent =
+/*#__PURE__*/
+function () {
+  function ResourceTimelineComponent() {
+    _classCallCheck(this, ResourceTimelineComponent);
+
+    this.domain = "all";
+    this.startTime = 0;
+    this.endTime = null;
+  }
+
+  _createClass(ResourceTimelineComponent, [{
+    key: "isPartial",
+    value: function isPartial() {
+      return !(this.startTime === 0 && this.endTime === null);
     }
-  }
-
-  var onDomLoad = _waterfall["default"].timeBlock("domContentLoaded Event", calc.domContentLoadedEventStart, calc.domContentLoadedEventEnd, "block-dom-content-loaded");
-
-  var onLoadEvt = _waterfall["default"].timeBlock("Onload Event", calc.loadEventStart, calc.loadEventEnd, "block-onload");
-
-  var navigationApiTotal = [_waterfall["default"].timeBlock("Unload", calc.unloadEventStart, calc.unloadEventEnd, "block-unload"), _waterfall["default"].timeBlock("Redirect", calc.redirectStart, calc.redirectEnd, "block-redirect"), _waterfall["default"].timeBlock("App cache", calc.fetchStart, calc.domainLookupStart, "block-appcache"), _waterfall["default"].timeBlock("DNS", calc.domainLookupStart, calc.domainLookupEnd, "block-dns"), _waterfall["default"].timeBlock("TCP", calc.connectStart, calc.connectEnd, "block-tcp"), _waterfall["default"].timeBlock("Timer to First Byte", calc.requestStart, calc.responseStart, "block-ttfb"), _waterfall["default"].timeBlock("Response", calc.responseStart, calc.responseEnd, "block-response"), _waterfall["default"].timeBlock("DOM Processing", calc.domLoading, calc.domComplete, "block-dom"), onDomLoad, onLoadEvt];
-
-  if (calc.secureConnectionStart) {
-    navigationApiTotal.push(_waterfall["default"].timeBlock("SSL", calc.secureConnectionStart, calc.connectEnd, "block-ssl"));
-  }
-
-  if (calc.msFirstPaint) {
-    navigationApiTotal.push(_waterfall["default"].timeBlock("msFirstPaint Event", calc.msFirstPaint, calc.msFirstPaint, "block-ms-first-paint-event"));
-  }
-
-  if (calc.domInteractive) {
-    navigationApiTotal.push(_waterfall["default"].timeBlock("domInteractive Event", calc.domInteractive, calc.domInteractive, "block-dom-interactive-event"));
-  }
-
-  if (!calc.redirectEnd && !calc.redirectStart && calc.fetchStart > calc.navigationStart) {
-    navigationApiTotal.push(_waterfall["default"].timeBlock("Cross-Domain Redirect", calc.navigationStart, calc.fetchStart, "block-redirect"));
-  }
-
-  calc.blocks = [_waterfall["default"].timeBlock("Navigation API total", 0, calc.loadEventEnd, "block-navigation-api-total", navigationApiTotal)];
-
-  _data["default"].allResourcesCalc.filter(function (resource) {
-    //do not show items up to 15 seconds after onload - else beacon ping etc make diagram useless
-    return resource.startTime < calc.loadEventEnd + 15000;
-  }).filter(filter || function () {
-    return true;
-  }).forEach(function (resource, i) {
-    var segments = [_waterfall["default"].timeBlock("Redirect", resource.redirectStart, resource.redirectEnd, "block-redirect"), _waterfall["default"].timeBlock("DNS Lookup", resource.domainLookupStart, resource.domainLookupEnd, "block-dns"), _waterfall["default"].timeBlock("Initial Connection (TCP)", resource.connectStart, resource.connectEnd, "block-dns"), _waterfall["default"].timeBlock("secureConnect", resource.secureConnectionStart || undefined, resource.connectEnd, "block-ssl"), _waterfall["default"].timeBlock("Timer to First Byte", resource.requestStart, resource.responseStart, "block-ttfb"), _waterfall["default"].timeBlock("Content Download", resource.responseStart || undefined, resource.responseEnd, "block-response")];
-    var resourceTimings = [0, resource.redirectStart, resource.domainLookupStart, resource.connectStart, resource.secureConnectionStart, resource.requestStart, resource.responseStart];
-    var firstTiming = resourceTimings.reduce(function (currMinTiming, currentValue) {
-      if (currentValue > 0 && (currentValue < currMinTiming || currMinTiming <= 0) && currentValue != resource.startTime) {
-        return currentValue;
-      } else {
-        return currMinTiming;
-      }
-    });
-
-    if (resource.startTime < firstTiming) {
-      segments.unshift(_waterfall["default"].timeBlock("Stalled/Blocking", resource.startTime, firstTiming, "block-blocking"));
-    }
-
-    calc.blocks.push(_waterfall["default"].timeBlock(resource.name, resource.startTime, resource.responseEnd, "block-" + resource.initiatorType, segments, resource));
-    calc.lastResponseEnd = Math.max(calc.lastResponseEnd, resource.responseEnd);
-  });
-
-  return {
-    loadDuration: Math.round(Math.max(calc.lastResponseEnd, _data["default"].perfTiming.loadEventEnd - _data["default"].perfTiming.navigationStart)),
-    blocks: calc.blocks,
-    bg: [onDomLoad, onLoadEvt]
-  };
-};
-
-resourcesTimelineComponent.init = function () {
-  var chartData = getChartData();
-
-  var chartHolder = _waterfall["default"].setupTimeLine(chartData.loadDuration, chartData.blocks, _data["default"].marks, chartData.bg, "Resource Timing");
-
-  if (_data["default"].requestsByDomain.length > 1) {
-    var selectBox = _dom["default"].newTag("select", {
-      "class": "domain-selector",
-      onchange: function onchange() {
-        var domain = _this.options[_this.selectedIndex].value;
-
-        if (domain === "all") {
-          chartData = getChartData();
-        } else {
-          chartData = getChartData(function (resource) {
-            return resource.domain === domain;
-          });
-        }
-
-        var tempChartHolder = _waterfall["default"].setupTimeLine(chartData.loadDuration, chartData.blocks, _data["default"].marks, chartData.bg, "Temp");
-
-        var oldSVG = chartHolder.getElementsByClassName("water-fall-chart")[0];
-        var newSVG = tempChartHolder.getElementsByClassName("water-fall-chart")[0];
-        chartHolder.replaceChild(newSVG, oldSVG);
-      }
-    });
-
-    selectBox.appendChild(_dom["default"].newTag("option", {
-      text: "show all",
-      value: "all"
-    }));
-
-    _data["default"].requestsByDomain.forEach(function (domain) {
-      selectBox.appendChild(_dom["default"].newTag("option", {
-        text: domain.domain
-      }));
-    });
-
-    var chartSvg = chartHolder.getElementsByClassName("water-fall-chart")[0];
-    chartSvg.parentNode.insertBefore(selectBox, chartSvg);
-  }
-
-  return chartHolder;
-};
-
-var _default = resourcesTimelineComponent;
-exports["default"] = _default;
-
-
-},{"../data":8,"../helpers/dom":9,"../helpers/waterfall":17}],6:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports["default"] = void 0;
-
-var _data = _interopRequireDefault(require("../data"));
-
-var _dom = _interopRequireDefault(require("../helpers/dom"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
-/*
-Tiles to summarize page performance
-*/
-var summaryTilesComponent = {};
-
-summaryTilesComponent.init = function () {
-  var createTile = function createTile(title, value, titleFontSize) {
-    titleFontSize = titleFontSize || 60;
-
-    var dl = _dom["default"].newTag("dl", {
-      "class": "summary-tile"
-    });
-
-    dl.appendChild(_dom["default"].newTag("dt", {
-      childElement: title
-    }));
-    dl.appendChild(_dom["default"].newTag("dd", {
-      childElement: value
-    }, "font-size:" + titleFontSize + "px;"));
-    return dl;
-  };
-
-  var createAppendixDefValue = function createAppendixDefValue(a, definition, value) {
-    a.appendChild(_dom["default"].newTag("dt", {
-      childElement: definition
-    }));
-    a.appendChild(_dom["default"].newTag("dd", {
-      text: value
-    }));
-  };
-
-  var tilesHolder = _dom["default"].newTag("section", {
-    "class": "tiles-holder chart-holder"
-  });
-
-  var appendix = _dom["default"].newTag("dl", {
-    "class": "summary-tile-appendix"
-  });
-
-  [createTile("Requests", _data["default"].requestsOnly.length || "0"), createTile("Domains", _data["default"].requestsByDomain.length || "0"), createTile(_dom["default"].combineNodes("Subdomains of ", _dom["default"].newTag("abbr", {
-    title: "Top Level Domain",
-    text: "TLD"
-  })), _data["default"].hostSubdomains || "0"), createTile(_dom["default"].combineNodes("Requests to ", _dom["default"].newTag("span", {
-    title: location.host,
-    text: "Host"
-  })), _data["default"].hostRequests || "0"), createTile(_dom["default"].combineNodes(_dom["default"].newTag("abbr", {
-    title: "Top Level Domain",
-    text: "TLD"
-  }), " & Subdomain Requests"), _data["default"].currAndSubdomainRequests || "0"), createTile("Total", _data["default"].perfTiming.loadEventEnd - _data["default"].perfTiming.navigationStart + "ms", 40), createTile("Time to First Byte", _data["default"].perfTiming.responseStart - _data["default"].perfTiming.navigationStart + "ms", 40), createTile(_dom["default"].newTag("span", {
-    title: "domLoading to domContentLoadedEventStart",
-    text: "DOM Content Loading"
-  }), _data["default"].perfTiming.domContentLoadedEventStart - _data["default"].perfTiming.domLoading + "ms", 40), createTile(_dom["default"].newTag("span", {
-    title: "domLoading to loadEventStart",
-    text: "DOM Processing"
-  }), _data["default"].perfTiming.domComplete - _data["default"].perfTiming.domLoading + "ms", 40)].forEach(function (tile) {
-    tilesHolder.appendChild(tile);
-  });
-
-  if (_data["default"].allResourcesCalc.length > 0) {
-    tilesHolder.appendChild(createTile(_dom["default"].newTag("span", {
-      title: _data["default"].slowestCalls[0].name,
-      text: "Slowest Call"
-    }), _dom["default"].newTag("span", {
-      title: _data["default"].slowestCalls[0].name,
-      text: Math.floor(_data["default"].slowestCalls[0].duration) + "ms"
-    }), 40));
-    tilesHolder.appendChild(createTile("Average Call", _data["default"].average + "ms", 40));
-  }
-
-  createAppendixDefValue(appendix, _dom["default"].newTag("abbr", {
-    title: "Top Level Domain",
-    text: "TLD"
-  }, location.host.split(".").slice(-2).join(".")));
-  createAppendixDefValue(appendix, _dom["default"].newTextNode("Host:"), location.host);
-  createAppendixDefValue(appendix, _dom["default"].newTextNode("document.domain:"), document.domain);
-  tilesHolder.appendChild(appendix);
-  return tilesHolder;
-};
-
-var _default = summaryTilesComponent;
-exports["default"] = _default;
-
-
-},{"../data":8,"../helpers/dom":9}],7:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports["default"] = void 0;
-
-var _data = _interopRequireDefault(require("../data"));
-
-var _dom = _interopRequireDefault(require("../helpers/dom"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
-/*
-Logic for Request analysis table
-*/
-var tableComponent = {};
-
-tableComponent.init = function () {
-  var output = _data["default"].requestsOnly.reduce(function (collectObj, currR) {
-    var fileTypeData = collectObj[currR.fileType],
-        initiatorTypeData;
-
-    if (!fileTypeData) {
-      fileTypeData = collectObj[currR.fileType] = {
-        "fileType": currR.fileType,
-        "count": 0,
-        "initiatorType": {},
-        "requestsToHost": 0,
-        "requestsToExternal": 0
+  }, {
+    key: "getChartData",
+    value: function getChartData(filter) {
+      var self = this;
+      var calc = {
+        pageLoadTime: _data["default"].perfTiming.loadEventEnd - _data["default"].perfTiming.responseStart,
+        lastResponseEnd: _data["default"].perfTiming.loadEventEnd - _data["default"].perfTiming.responseStart
       };
-    }
 
-    initiatorTypeData = fileTypeData.initiatorType[currR.initiatorType];
-
-    if (!initiatorTypeData) {
-      initiatorTypeData = fileTypeData.initiatorType[currR.initiatorType] = {
-        "initiatorType": currR.initiatorType,
-        "count": 0,
-        "requestsToHost": 0,
-        "requestsToExternal": 0
-      };
-    }
-
-    fileTypeData.count++;
-    initiatorTypeData.count++;
-
-    if (currR.isRequestToHost) {
-      fileTypeData.requestsToHost++;
-      initiatorTypeData.requestsToHost++;
-    } else {
-      fileTypeData.requestsToExternal++;
-      initiatorTypeData.requestsToExternal++;
-    }
-
-    return collectObj;
-  }, {});
-
-  var sectionHolder = _dom["default"].newTag("section", {
-    "class": "table-section-holder chart-holder"
-  });
-
-  sectionHolder.appendChild(_dom["default"].newTag("h1", {
-    text: "Request FileTypes & Initiators"
-  }));
-  sectionHolder.appendChild(_dom["default"].tableFactory("filetypes-and-intiators-table", function (theadTr) {
-    ["FileType", "Count", "Count Internal", "Count External", "Initiator Type", "Count by Initiator Type", "Initiator Type Internal", "Initiator Type External"].forEach(function (x) {
-      theadTr.appendChild(_dom["default"].newTag("th", {
-        text: x,
-        width: x.indexOf("ternal") > 0 ? "12%" : ""
-      }));
-    });
-    return theadTr;
-  }, function (tbody) {
-    Object.keys(output).forEach(function (key, i) {
-      var fileTypeData = output[key],
-          initiatorTypeKeys = Object.keys(fileTypeData.initiatorType),
-          firstinitiatorTypeKey = fileTypeData.initiatorType[initiatorTypeKeys[0]],
-          rowspan = initiatorTypeKeys.length;
-
-      var tr = _dom["default"].newTag("tr", {
-        "class": "file-type-row " + (fileTypeData.fileType || "other") + "-light"
-      });
-
-      [fileTypeData.fileType, fileTypeData.count, fileTypeData.requestsToHost, fileTypeData.requestsToExternal, firstinitiatorTypeKey.initiatorType, firstinitiatorTypeKey.count, firstinitiatorTypeKey.requestsToHost, firstinitiatorTypeKey.requestsToExternal].forEach(function (val, i) {
-        var settings = {
-          text: val
-        };
-
-        if (i < 4 && initiatorTypeKeys.length > 1) {
-          settings.rowSpan = rowspan;
-        } else if (i >= 4) {
-          settings["class"] = (initiatorTypeKeys[0] || "other") + "-light";
+      for (var perfProp in _data["default"].perfTiming) {
+        if (_data["default"].perfTiming[perfProp] && typeof _data["default"].perfTiming[perfProp] === "number") {
+          calc[perfProp] = _data["default"].perfTiming[perfProp] - _data["default"].perfTiming.navigationStart;
         }
+      }
 
-        tr.appendChild(_dom["default"].newTag("td", settings));
-      });
-      tbody.appendChild(tr);
-      initiatorTypeKeys.slice(1).forEach(function (initiatorTypeKey) {
-        var initiatorTypeData = fileTypeData.initiatorType[initiatorTypeKey];
+      var onDomLoad = _waterfall["default"].timeBlock("domContentLoaded Event", calc.domContentLoadedEventStart, calc.domContentLoadedEventEnd, "block-dom-content-loaded");
 
-        var tr2 = _dom["default"].newTag("tr", {
-          "class": "initiator-type-more " + (initiatorTypeKey || "other") + "-light"
+      var onLoadEvt = _waterfall["default"].timeBlock("Onload Event", calc.loadEventStart, calc.loadEventEnd, "block-onload");
+
+      var navigationApiTotal = [_waterfall["default"].timeBlock("Unload", calc.unloadEventStart, calc.unloadEventEnd, "block-unload"), _waterfall["default"].timeBlock("Redirect", calc.redirectStart, calc.redirectEnd, "block-redirect"), _waterfall["default"].timeBlock("App cache", calc.fetchStart, calc.domainLookupStart, "block-appcache"), _waterfall["default"].timeBlock("DNS", calc.domainLookupStart, calc.domainLookupEnd, "block-dns"), _waterfall["default"].timeBlock("TCP", calc.connectStart, calc.connectEnd, "block-tcp"), _waterfall["default"].timeBlock("Timer to First Byte", calc.requestStart, calc.responseStart, "block-ttfb"), _waterfall["default"].timeBlock("Response", calc.responseStart, calc.responseEnd, "block-response"), _waterfall["default"].timeBlock("DOM Processing", calc.domLoading, calc.domComplete, "block-dom"), onDomLoad, onLoadEvt];
+
+      if (calc.secureConnectionStart) {
+        navigationApiTotal.push(_waterfall["default"].timeBlock("SSL", calc.secureConnectionStart, calc.connectEnd, "block-ssl"));
+      }
+
+      if (calc.msFirstPaint) {
+        navigationApiTotal.push(_waterfall["default"].timeBlock("msFirstPaint Event", calc.msFirstPaint, calc.msFirstPaint, "block-ms-first-paint-event"));
+      }
+
+      if (calc.domInteractive) {
+        navigationApiTotal.push(_waterfall["default"].timeBlock("domInteractive Event", calc.domInteractive, calc.domInteractive, "block-dom-interactive-event"));
+      }
+
+      if (!calc.redirectEnd && !calc.redirectStart && calc.fetchStart > calc.navigationStart) {
+        navigationApiTotal.push(_waterfall["default"].timeBlock("Cross-Domain Redirect", calc.navigationStart, calc.fetchStart, "block-redirect"));
+      }
+
+      calc.blocks = self.isPartial() ? [] : [_waterfall["default"].timeBlock("Navigation API total", 0, calc.loadEventEnd, "block-navigation-api-total", navigationApiTotal)];
+
+      _data["default"].allResourcesCalc.filter(function (resource) {
+        //do not show items up to 20 seconds after onload - else beacon ping etc make diagram useless
+        return resource.startTime < calc.loadEventEnd + 20000;
+      }).filter(filter || function () {
+        return true;
+      }).forEach(function (resource, i) {
+        var segments = [_waterfall["default"].timeBlock("Redirect", resource.redirectStart, resource.redirectEnd, "block-redirect"), _waterfall["default"].timeBlock("DNS Lookup", resource.domainLookupStart, resource.domainLookupEnd, "block-dns"), _waterfall["default"].timeBlock("Initial Connection (TCP)", resource.connectStart, resource.connectEnd, "block-dns"), _waterfall["default"].timeBlock("secureConnect", resource.secureConnectionStart || undefined, resource.connectEnd, "block-ssl"), _waterfall["default"].timeBlock("Timer to First Byte", resource.requestStart, resource.responseStart, "block-ttfb"), _waterfall["default"].timeBlock("Content Download", resource.responseStart || undefined, resource.responseEnd, "block-response")];
+        var resourceTimings = [0, resource.redirectStart, resource.domainLookupStart, resource.connectStart, resource.secureConnectionStart, resource.requestStart, resource.responseStart];
+        var firstTiming = resourceTimings.reduce(function (currMinTiming, currentValue) {
+          if (currentValue > 0 && (currentValue < currMinTiming || currMinTiming <= 0) && currentValue != resource.startTime) {
+            return currentValue;
+          } else {
+            return currMinTiming;
+          }
         });
 
-        tr2.appendChild(_dom["default"].newTag("td", {
-          text: initiatorTypeKey
-        }));
-        tr2.appendChild(_dom["default"].newTag("td", {
-          text: initiatorTypeData.count
-        }));
-        tr2.appendChild(_dom["default"].newTag("td", {
-          text: initiatorTypeData.requestsToHost
-        }));
-        tr2.appendChild(_dom["default"].newTag("td", {
-          text: initiatorTypeData.requestsToExternal
-        }));
-        tbody.appendChild(tr2);
-      });
-    });
-    return tbody;
-  }));
-  return sectionHolder;
-};
+        if (resource.startTime < firstTiming) {
+          segments.unshift(_waterfall["default"].timeBlock("Stalled/Blocking", resource.startTime, firstTiming, "block-blocking"));
+        }
 
-var _default = tableComponent;
+        calc.blocks.push(_waterfall["default"].timeBlock(resource.name, resource.startTime, resource.responseEnd, "block-" + resource.initiatorType, segments, resource));
+        calc.lastResponseEnd = Math.max(calc.lastResponseEnd, resource.responseEnd);
+      });
+
+      var loadDuration = self.isPartial() ? Math.max((calc.blocks.map(function (it) {
+        return it.end;
+      }).reduce(function (r, v) {
+        return Math.max(r, v);
+      }, 1000) || self.startTime * 1000) - self.startTime * 1000, 1000) : Math.round(Math.max(calc.lastResponseEnd, _data["default"].perfTiming.loadEventEnd - _data["default"].perfTiming.navigationStart));
+      return {
+        loadDuration: loadDuration,
+        blocks: calc.blocks,
+        bg: [onDomLoad, onLoadEvt]
+      };
+    }
+  }, {
+    key: "refreshSVG",
+    value: function refreshSVG(chartHolder) {
+      var self = this;
+      var startTimeInMs = self.startTime * 1000;
+      var endTimeLimitInMs = self.endTime ? self.endTime * 1000 : null;
+      var chartData = self.getChartData(function (resource) {
+        return (self.domain === "all" || resource.domain === self.domain) && resource.startTime >= startTimeInMs && (!endTimeLimitInMs || resource.startTime <= endTimeLimitInMs);
+      });
+      var endTimeInMs = startTimeInMs + chartData.loadDuration;
+
+      var tempChartHolder = _waterfall["default"].setupTimeLine(self.startTime, chartData.loadDuration, chartData.blocks, _data["default"].marks.filter(function (it) {
+        return it.startTime >= startTimeInMs && it.startTime <= endTimeInMs;
+      }), chartData.bg, "Temp");
+
+      var oldSVG = chartHolder.getElementsByClassName("water-fall-chart")[0];
+      var newSVG = tempChartHolder.getElementsByClassName("water-fall-chart")[0];
+      chartHolder.replaceChild(newSVG, oldSVG);
+    }
+  }, {
+    key: "init",
+    value: function init() {
+      var self = this;
+      var chartData = self.getChartData();
+
+      var chartHolder = _waterfall["default"].setupTimeLine(self.startTime, chartData.loadDuration, chartData.blocks, _data["default"].marks, chartData.bg, "Resource Timing");
+
+      var chartSvg = chartHolder.getElementsByClassName("water-fall-chart")[0]; // Add end time selector
+
+      var endTimeSelector = _dom["default"].newTag("select", {
+        "class": "end-time-selector",
+        onchange: function onchange(e) {
+          var time = e.target.options[e.target.selectedIndex].value;
+          self.endTime = time !== "all" ? parseInt(time) : null;
+          self.refreshSVG(chartHolder);
+        }
+      });
+
+      endTimeSelector.appendChild(_dom["default"].newTag("option", {
+        text: "To",
+        value: "all"
+      }));
+
+      for (var i = 1; i <= 25; i++) {
+        endTimeSelector.appendChild(_dom["default"].newTag("option", {
+          text: i
+        }));
+      }
+
+      chartSvg.parentNode.insertBefore(endTimeSelector, chartSvg); // Add start time selector
+
+      var startTimeSelector = _dom["default"].newTag("select", {
+        "class": "start-time-selector",
+        onchange: function onchange(e) {
+          var time = e.target.options[e.target.selectedIndex].value;
+          self.startTime = time ? parseInt(time) : 0;
+          self.refreshSVG(chartHolder);
+        }
+      });
+
+      startTimeSelector.appendChild(_dom["default"].newTag("option", {
+        text: "From",
+        value: "0"
+      }));
+
+      for (var _i = 1; _i <= 20; _i++) {
+        startTimeSelector.appendChild(_dom["default"].newTag("option", {
+          text: _i
+        }));
+      }
+
+      chartSvg.parentNode.insertBefore(startTimeSelector, chartSvg); // Domain selector
+
+      if (_data["default"].requestsByDomain.length > 1) {
+        debugger;
+
+        var selectBox = _dom["default"].newTag("select", {
+          "class": "domain-selector",
+          onchange: function onchange(e) {
+            self.domain = e.target.options[e.target.selectedIndex].value;
+            self.refreshSVG(chartHolder);
+          }
+        });
+
+        selectBox.appendChild(_dom["default"].newTag("option", {
+          text: "show all",
+          value: "all"
+        }));
+
+        _data["default"].requestsByDomain.forEach(function (domain) {
+          selectBox.appendChild(_dom["default"].newTag("option", {
+            text: domain.domain
+          }));
+        });
+
+        chartSvg.parentNode.insertBefore(selectBox, chartSvg);
+      }
+
+      return chartHolder;
+    }
+  }]);
+
+  return ResourceTimelineComponent;
+}();
+
+var _default = ResourceTimelineComponent;
 exports["default"] = _default;
 
 
-},{"../data":8,"../helpers/dom":9}],8:[function(require,module,exports){
+},{"../data":5,"../helpers/dom":6,"../helpers/waterfall":13}],5:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -907,7 +625,7 @@ var _default = data;
 exports["default"] = _default;
 
 
-},{"./helpers/helpers":10}],9:[function(require,module,exports){
+},{"./helpers/helpers":7}],6:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1072,7 +790,7 @@ var _default = {
 exports["default"] = _default;
 
 
-},{}],10:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1283,7 +1001,7 @@ var _default = helper;
 exports["default"] = _default;
 
 
-},{}],11:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1411,7 +1129,7 @@ var _default = {
 exports["default"] = _default;
 
 
-},{"../helpers/dom":9,"../helpers/style":14}],12:[function(require,module,exports){
+},{"../helpers/dom":6,"../helpers/style":10}],9:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1508,193 +1226,18 @@ var _default = persistance;
 exports["default"] = _default;
 
 
-},{"../data":8}],13:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports["default"] = void 0;
-
-var _helpers = _interopRequireDefault(require("../helpers/helpers"));
-
-var _svg = _interopRequireDefault(require("../helpers/svg"));
-
-var _dom = _interopRequireDefault(require("../helpers/dom"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
-var pieChartHelpers = {};
-var unit = Math.PI * 2 / 100;
-
-var createWedge = function createWedge(id, size, startAngle, percentage, labelTxt, colour) {
-  var radius = size / 2,
-      endAngle = startAngle + (percentage * unit - 0.001),
-      labelAngle = startAngle + (percentage / 2 * unit - 0.001),
-      x1 = radius + radius * Math.sin(startAngle),
-      y1 = radius - radius * Math.cos(startAngle),
-      x2 = radius + radius * Math.sin(endAngle),
-      y2 = radius - radius * Math.cos(endAngle),
-      x3 = radius + radius * 0.85 * Math.sin(labelAngle),
-      y3 = radius - radius * 0.85 * Math.cos(labelAngle),
-      big = endAngle - startAngle > Math.PI ? 1 : 0;
-  var d = "M " + radius + "," + radius + // Start at circle center
-  " L " + x1 + "," + y1 + // Draw line to (x1,y1)
-  " A " + radius + "," + radius + // Draw an arc of radius r
-  " 0 " + big + " 1 " + // Arc details...
-  x2 + "," + y2 + // Arc goes to to (x2,y2)
-  " Z"; // Close path back to (cx,cy)
-
-  var path = _svg["default"].newEl("path", {
-    id: id,
-    d: d,
-    fill: colour
-  });
-
-  path.appendChild(_svg["default"].newEl("title", {
-    text: labelTxt
-  })); // Add tile to wedge path
-
-  path.addEventListener("mouseenter", function (evt) {
-    evt.target.style.opacity = "0.5";
-    evt.target.ownerDocument.getElementById(evt.target.getAttribute("id") + "-table").style.backgroundColor = "#ccc";
-  });
-  path.addEventListener("mouseleave", function (evt) {
-    evt.target.style.opacity = "1";
-    evt.target.ownerDocument.getElementById(evt.target.getAttribute("id") + "-table").style.backgroundColor = "transparent";
-  });
-
-  if (percentage > 10) {
-    var wedgeLabel = _svg["default"].newTextEl(labelTxt, y3); //first half or second half
-
-
-    if (labelAngle < Math.PI) {
-      wedgeLabel.setAttribute("x", x3 - _svg["default"].getNodeTextWidth(wedgeLabel));
-    } else {
-      wedgeLabel.setAttribute("x", x3);
-    }
-
-    return {
-      path: path,
-      wedgeLabel: wedgeLabel,
-      endAngle: endAngle
-    };
-  }
-
-  return {
-    path: path,
-    endAngle: endAngle
-  };
-};
-
-var chartMaxHeight = function () {
-  var contentWidth = window.innerWidth * 0.98 - 64;
-
-  if (contentWidth < 700) {
-    return 350;
-  } else if (contentWidth < 800) {
-    return contentWidth / 2 - 72;
-  } else {
-    return contentWidth / 3 - 72;
-  }
-}();
-
-pieChartHelpers.createPieChart = function (data, size) {
-  //inspired by http://jsfiddle.net/da5LN/62/
-  var startAngle = 0; // init startAngle
-
-  var chart = _svg["default"].newEl("svg:svg", {
-    viewBox: "0 0 " + size + " " + size,
-    "class": "pie-chart"
-  }, "max-height:" + chartMaxHeight + "px;"),
-      labelWrap = _svg["default"].newEl("g", {}, "pointer-events:none; font-weight:bold;"),
-      wedgeWrap = _svg["default"].newEl("g"); //loop through data and create wedges
-
-
-  data.forEach(function (dataObj) {
-    var wedgeData = createWedge(dataObj.id, size, startAngle, dataObj.perc, dataObj.label + " (" + dataObj.count + ")", dataObj.colour || _helpers["default"].getRandomColor());
-    wedgeWrap.appendChild(wedgeData.path);
-    startAngle = wedgeData.endAngle;
-
-    if (wedgeData.wedgeLabel) {
-      labelWrap.appendChild(wedgeData.wedgeLabel);
-    }
-  }); // foreground circle
-
-  wedgeWrap.appendChild(_svg["default"].newEl("circle", {
-    cx: size / 2,
-    cy: size / 2,
-    r: size * 0.05,
-    fill: "#fff"
-  }));
-  chart.appendChild(wedgeWrap);
-  chart.appendChild(labelWrap);
-  return chart;
-};
-
-pieChartHelpers.createChartTable = function (title, data, columns) {
-  columns = columns || [{
-    name: "Requests",
-    field: "count"
-  }]; //create table
-
-  return _dom["default"].tableFactory("", function (thead) {
-    thead.appendChild(_dom["default"].newTag("th", {
-      text: title,
-      "class": "text-left"
-    }));
-    columns.forEach(function (column) {
-      thead.appendChild(_dom["default"].newTag("th", {
-        text: column.name,
-        "class": "text-right"
-      }));
-    });
-    thead.appendChild(_dom["default"].newTag("th", {
-      text: "Percentage",
-      "class": "text-right"
-    }));
-    return thead;
-  }, function (tbody) {
-    data.forEach(function (y) {
-      var row = _dom["default"].newTag("tr", {
-        id: y.id + "-table"
-      });
-
-      row.appendChild(_dom["default"].newTag("td", {
-        text: y.label
-      }));
-      columns.forEach(function (column) {
-        row.appendChild(_dom["default"].newTag("td", {
-          text: y[column.field].toString(),
-          "class": "text-right"
-        }));
-      });
-      row.appendChild(_dom["default"].newTag("td", {
-        text: y.perc.toPrecision(2) + "%",
-        "class": "text-right"
-      }));
-      tbody.appendChild(row);
-    });
-    return tbody;
-  });
-};
-
-var _default = pieChartHelpers;
-exports["default"] = _default;
-
-
-},{"../helpers/dom":9,"../helpers/helpers":10,"../helpers/svg":15}],14:[function(require,module,exports){
+},{"../data":5}],10:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.style = void 0;
-var style = "body {overflow: auto; background: #fff; font:normal 12px/18px sans-serif; color:#333;} * {box-sizing:border-box;} svg {font:normal 12px/18px sans-serif;} th {text-align: left;} button {cursor:pointer;} button:disabled {cursor:default;} #perfbook-holder {overflow: hidden; width:100%; padding:1em 2em;} #perfbook-content {position:relative;} .perfbook-close {position:absolute; top:0; right:0; padding:1em; z-index:1; background:transparent; border:0; cursor:pointer;} .full-width {width:100%;} .chart-holder {margin: 5em 0;} h1 {font:bold 18px/18px sans-serif; margin:1em 0; color:#666;} .text-right {text-align: right;} .text-left {text-align: left;} .css {background: #afd899;} .iframe, .html, .internal {background: #85b3f2;} .img, .image {background: #bc9dd6;} .script, .js {background: #e7bd8c;} .link {background: #89afe6;} .swf, .flash {background: #4db3ba;} .font {background: #e96859;} .xmlhttprequest, .ajax {background: #e7d98c;} .other {background: #bebebe;} .css-light {background: #b9cfa0;} .iframe-light, .html-light, .internal-light {background: #c2d9f9;} .img-light, .image-light {background: #deceeb;} .script-light, .js-light {background: #f3dec6;} .link-light {background: #c4d7f3;} .swf-light, .flash-light {background: #a6d9dd;} .font-light {background: #f4b4ac;} .xmlhttprequest-light, .ajax-light {background: #f3ecc6;} .other-light {background: #dfdfdf;} .block-css {fill: #afd899;} .block-iframe, .block-html, .block-internal {fill: #85b3f2;} .block-img, .block-image {fill: #bc9dd6;} .block-script, .block-js {fill: #e7bd8c;} .block-link {fill: #89afe6;} .block-swf, .block-flash {fill: #4db3ba;} .block-font {fill: #e96859;} .block-xmlhttprequest, .block-ajax {fill: #e7d98c;} .block-other {fill: #bebebe;} .block-total {fill: #ccc;} .block-unload {fill: #909;} .block-redirect {fill: #ffff60;} .block-appcache {fill: #1f831f;} .block-dns {fill: #1f7c83;} .block-tcp {fill: #e58226;} .block-ttfb {fill: #1fe11f;} .block-response {fill: #1977dd;} .block-dom {fill: #9cc;} .block-dom-content-loaded {fill: #d888df;} .block-onload {fill: #c0c0ff;} .block-ssl {fill: #c141cd; } .block-ms-first-paint-event {fill: #8fbc83; } .block-dom-interactive-event {fill: #d888df; } .block-network-server {fill: #8cd18c; } .block-custom-measure {fill: #f00; } .block-navigation-api-total {fill: #ccc;} .block-blocking {fill: #cdcdcd;} .block-undefined {fill: #0f0;} .tiles-holder {margin: 2em -18px 2em 0; display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex; display: flex; -webkit-flex-flow: row wrap; flex-flow: row wrap; } .summary-tile { flex-grow: 1; width:250px; background:#ddd; padding: 1em; margin:0 18px 1em 0; color:#666; text-align:center;} .summary-tile dt {font-weight:bold; font-size:16px; display:block; line-height:1.2em; min-height:2.9em; padding:0 0 0.5em;} .summary-tile dd {font-weight:bold; line-height:60px; margin:0;} .summary-tile-appendix {float:left; clear:both; width:100%; font-size:10px; line-height:1.1em; color:#666;} .summary-tile-appendix dt {float:left; clear:both;} .summary-tile-appendix dd {float:left; margin:0 0 0 1em;} .pie-charts-holder {margin-right: -72px; display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex; display: flex; -webkit-flex-flow: row wrap; flex-flow: row wrap;} .pie-chart-holder {flex-grow: 1; width:350px; max-width: 600px; margin: 0 72px 0 0;} .pie-chart-holder h1 {min-height:2em;} .pie-chart {width:100%;} .table-holder {overflow-x:auto} .table-holder table {float:left; width:100%; font-size:12px; line-height:18px;} .table-holder th, .table-holder td {line-height: 1em; margin:0; padding:0.25em 0.5em 0.25em 0;} #pie-request-by-domain {flex-grow: 2; width:772px; max-width: 1272px;} #filetypes-and-intiators-table {margin: 2em 0 5em;} #filetypes-and-intiators-table table {vertical-align: middle; border-collapse: collapse;} #filetypes-and-intiators-table td {padding:0.5em; border-right: solid 1px #fff;} #filetypes-and-intiators-table td:last-child {padding-right: 0; border-right:0;} #filetypes-and-intiators-table .file-type-row td {border-top: solid 10px #fff;} #filetypes-and-intiators-table .file-type-row:first-child td {border-top: none;} .water-fall-holder {fill:#ccc;} .water-fall-chart {width:100%; background:#f0f5f0;} .water-fall-chart .marker-holder {width:100%;} .water-fall-chart .line-holder {stroke-width:1; stroke: #ccc; stroke-opacity:0.5;} .water-fall-chart .line-holder.active {stroke: #69009e; stroke-width:2; stroke-opacity:1;} .water-fall-chart .labels {width:100%;} .water-fall-chart .labels .inner-label {pointer-events: none;} .water-fall-chart .time-block.active {opacity: 0.8;} .water-fall-chart .line-end, .water-fall-chart .line-start {display: none; stroke-width:1; stroke-opacity:0.5; stroke: #000;} .water-fall-chart .line-end.active, .water-fall-chart .line-start.active {display: block;} .water-fall-chart .mark-holder text {-webkit-writing-mode: tb; writing-mode:vertical-lr; writing-mode: tb;} .time-scale line {stroke:#0cc; stroke-width:1;} .time-scale text {font-weight:bold;} .domain-selector {float:right; margin: -35px 0 0 0;} .navigation-timing {} .legends-group { display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex; display: flex; -webkit-flex-flow: row wrap; flex-flow: row wrap; } .legends-group .legend-holder { flex-grow: 1; width:250px; padding:0 1em 1em; } .legends-group .legend-holder h4 { margin: 0; padding: 0; } .legend dt {float: left; clear: left; padding: 0 0 0.5em;} .legend dd {float: left; display: inline-block; margin: 0 1em; line-height: 1em;} .legend .colorBoxHolder span {display: inline-block; width: 15px; height: 1em;} .page-metric {} .page-metric button {margin-left: 2em;}";
+var style = "body {overflow: auto; background: #fff; font:normal 12px/18px sans-serif; color:#333;} * {box-sizing:border-box;} svg {font:normal 12px/18px sans-serif;} th {text-align: left;} button {cursor:pointer;} button:disabled {cursor:default;} #perfbook-holder {overflow: hidden; width:100%; padding:1em 2em;} #perfbook-content {position:relative;} .perfbook-close {position:absolute; top:0; right:0; padding:1em; z-index:1; background:transparent; border:0; cursor:pointer;} .full-width {width:100%;} .chart-holder {margin: 5em 0;} h1 {font:bold 18px/18px sans-serif; margin:1em 0; color:#666;} .text-right {text-align: right;} .text-left {text-align: left;} .css {background: #afd899;} .iframe, .html, .internal {background: #85b3f2;} .img, .image {background: #bc9dd6;} .script, .js {background: #e7bd8c;} .link {background: #89afe6;} .swf, .flash {background: #4db3ba;} .font {background: #e96859;} .xmlhttprequest, .ajax {background: #e7d98c;} .other {background: #bebebe;} .css-light {background: #b9cfa0;} .iframe-light, .html-light, .internal-light {background: #c2d9f9;} .img-light, .image-light {background: #deceeb;} .script-light, .js-light {background: #f3dec6;} .link-light {background: #c4d7f3;} .swf-light, .flash-light {background: #a6d9dd;} .font-light {background: #f4b4ac;} .xmlhttprequest-light, .ajax-light {background: #f3ecc6;} .other-light {background: #dfdfdf;} .block-css {fill: #afd899;} .block-iframe, .block-html, .block-internal {fill: #85b3f2;} .block-img, .block-image {fill: #bc9dd6;} .block-script, .block-js {fill: #e7bd8c;} .block-link {fill: #89afe6;} .block-swf, .block-flash {fill: #4db3ba;} .block-font {fill: #e96859;} .block-xmlhttprequest, .block-ajax {fill: #e7d98c;} .block-other {fill: #bebebe;} .block-total {fill: #ccc;} .block-unload {fill: #909;} .block-redirect {fill: #ffff60;} .block-appcache {fill: #1f831f;} .block-dns {fill: #1f7c83;} .block-tcp {fill: #e58226;} .block-ttfb {fill: #1fe11f;} .block-response {fill: #1977dd;} .block-dom {fill: #9cc;} .block-dom-content-loaded {fill: #d888df;} .block-onload {fill: #c0c0ff;} .block-ssl {fill: #c141cd; } .block-ms-first-paint-event {fill: #8fbc83; } .block-dom-interactive-event {fill: #d888df; } .block-network-server {fill: #8cd18c; } .block-custom-measure {fill: #f00; } .block-navigation-api-total {fill: #ccc;} .block-blocking {fill: #cdcdcd;} .block-undefined {fill: #0f0;} .tiles-holder {margin: 2em -18px 2em 0; display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex; display: flex; -webkit-flex-flow: row wrap; flex-flow: row wrap; } .summary-tile { flex-grow: 1; width:250px; background:#ddd; padding: 1em; margin:0 18px 1em 0; color:#666; text-align:center;} .summary-tile dt {font-weight:bold; font-size:16px; display:block; line-height:1.2em; min-height:2.9em; padding:0 0 0.5em;} .summary-tile dd {font-weight:bold; line-height:60px; margin:0;} .summary-tile-appendix {float:left; clear:both; width:100%; font-size:10px; line-height:1.1em; color:#666;} .summary-tile-appendix dt {float:left; clear:both;} .summary-tile-appendix dd {float:left; margin:0 0 0 1em;} .pie-charts-holder {margin-right: -72px; display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex; display: flex; -webkit-flex-flow: row wrap; flex-flow: row wrap;} .pie-chart-holder {flex-grow: 1; width:350px; max-width: 600px; margin: 0 72px 0 0;} .pie-chart-holder h1 {min-height:2em;} .pie-chart {width:100%;} .table-holder {overflow-x:auto} .table-holder table {float:left; width:100%; font-size:12px; line-height:18px;} .table-holder th, .table-holder td {line-height: 1em; margin:0; padding:0.25em 0.5em 0.25em 0;} #pie-request-by-domain {flex-grow: 2; width:772px; max-width: 1272px;} #filetypes-and-intiators-table {margin: 2em 0 5em;} #filetypes-and-intiators-table table {vertical-align: middle; border-collapse: collapse;} #filetypes-and-intiators-table td {padding:0.5em; border-right: solid 1px #fff;} #filetypes-and-intiators-table td:last-child {padding-right: 0; border-right:0;} #filetypes-and-intiators-table .file-type-row td {border-top: solid 10px #fff;} #filetypes-and-intiators-table .file-type-row:first-child td {border-top: none;} .water-fall-holder {fill:#ccc;} .water-fall-chart {width:100%; background:#f0f5f0;} .water-fall-chart .marker-holder {width:100%;} .water-fall-chart .line-holder {stroke-width:1; stroke: #ccc; stroke-opacity:0.5;} .water-fall-chart .line-holder.active {stroke: #69009e; stroke-width:2; stroke-opacity:1;} .water-fall-chart .labels {width:100%;} .water-fall-chart .labels .inner-label {pointer-events: none;} .water-fall-chart .time-block.active {opacity: 0.8;} .water-fall-chart .line-end, .water-fall-chart .line-start {display: none; stroke-width:1; stroke-opacity:0.5; stroke: #000;} .water-fall-chart .line-end.active, .water-fall-chart .line-start.active {display: block;} .water-fall-chart .mark-holder text {-webkit-writing-mode: tb; writing-mode:vertical-lr; writing-mode: tb;} .time-scale line {stroke:#0cc; stroke-width:1;} .time-scale text {font-weight:bold;} .domain-selector, .start-time-selector, .end-time-selector { float:right; } .navigation-timing {} .legends-group { display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex; display: flex; -webkit-flex-flow: row wrap; flex-flow: row wrap; } .legends-group .legend-holder { flex-grow: 1; width:250px; padding:0 1em 1em; } .legends-group .legend-holder h4 { margin: 0; padding: 0; } .legend dt {float: left; clear: left; padding: 0 0 0.5em;} .legend dd {float: left; display: inline-block; margin: 0 1em; line-height: 1em;} .legend .colorBoxHolder span {display: inline-block; width: 15px; height: 1em;} .page-metric {} .page-metric button {margin-left: 2em;}";
 exports.style = style;
 
 
-},{}],15:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1777,7 +1320,7 @@ var _default = {
 exports["default"] = _default;
 
 
-},{"../helpers/iFrameHolder":11}],16:[function(require,module,exports){
+},{"../helpers/iFrameHolder":8}],12:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1791,6 +1334,8 @@ Log tables in console
 var tableLogger = {};
 
 tableLogger.logTable = function (table) {
+  debugger;
+
   if (table.data.length > 0 && console.table) {
     console.log("\n\n\n" + table.name + ":");
     console.table(table.data, table.columns);
@@ -1805,7 +1350,7 @@ var _default = tableLogger;
 exports["default"] = _default;
 
 
-},{}],17:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1836,7 +1381,8 @@ waterfall.timeBlock = function (name, start, end, cssClass, segments, rawResourc
   };
 };
 
-waterfall.setupTimeLine = function (durationMs, blocks, marks, lines, title) {
+waterfall.setupTimeLine = function (startTimeAdjustment, durationMs, blocks, marks, lines, title) {
+  var startTimeAdjustmentInMs = startTimeAdjustment * 1000;
   var unit = durationMs / 100,
       barsToShow = blocks.filter(function (block) {
     return typeof block.start == "number" && typeof block.total == "number";
@@ -1931,7 +1477,7 @@ waterfall.setupTimeLine = function (durationMs, blocks, marks, lines, title) {
       rectHolder.appendChild(rect);
       segments.forEach(function (segment) {
         if (segment.total > 0 && typeof segment.start === "number") {
-          rectHolder.appendChild(createRect(segment.total, 8, segment.start || 0.001, y, segment.cssClass, segment.name + " (" + Math.round(segment.start) + "ms - " + Math.round(segment.end) + "ms | total: " + Math.round(segment.total) + "ms)"));
+          rectHolder.appendChild(createRect(segment.total, 8, segment.start ? segment.start - startTimeAdjustmentInMs : 0.001, y, segment.cssClass, segment.name + " (" + Math.round(segment.start) + "ms - " + Math.round(segment.end) + "ms | total: " + Math.round(segment.total) + "ms)"));
         }
       });
       return rectHolder;
@@ -1962,7 +1508,7 @@ waterfall.setupTimeLine = function (durationMs, blocks, marks, lines, title) {
     });
 
     for (var i = 0, secs = durationMs / 1000, secPerc = 100 / secs; i <= secs; i++) {
-      var lineLabel = _svg["default"].newTextEl(i + "sec", diagramHeight);
+      var lineLabel = _svg["default"].newTextEl(i + startTimeAdjustment + "sec", diagramHeight);
 
       if (i > secs - 0.2) {
         lineLabel.setAttribute("x", secPerc * i - 0.5 + "%");
@@ -1992,7 +1538,7 @@ waterfall.setupTimeLine = function (durationMs, blocks, marks, lines, title) {
     });
 
     marks.forEach(function (mark, i) {
-      var x = mark.startTime / unit;
+      var x = (mark.startTime - startTimeAdjustmentInMs) / unit;
 
       var markHolder = _svg["default"].newEl("g", {
         "class": "mark-holder"
@@ -2073,18 +1619,20 @@ waterfall.setupTimeLine = function (durationMs, blocks, marks, lines, title) {
   barsToShow.forEach(function (block, i) {
     var blockWidth = block.total || 1;
     var y = 25 * i;
-    timeLineHolder.appendChild(createRect(blockWidth, 25, block.start || 0.001, y, block.cssClass, block.name + " (" + block.start + "ms - " + block.end + "ms | total: " + block.total + "ms)", block.segments));
+    timeLineHolder.appendChild(createRect(blockWidth, 25, block.start ? block.start - startTimeAdjustmentInMs : 0.001, y, block.cssClass, block.name + " (" + block.start + "ms - " + block.end + "ms | total: " + block.total + "ms)", block.segments));
 
     var blockLabel = _svg["default"].newTextEl(block.name + " (" + Math.round(block.total) + "ms)", y + (block.segments ? 20 : 17));
 
+    var x = (block.start ? block.start - startTimeAdjustmentInMs : 0.001) / unit;
+
     if ((block.total || 1) / unit > 10 && _svg["default"].getNodeTextWidth(blockLabel) < 200) {
       blockLabel.setAttribute("class", "inner-label");
-      blockLabel.setAttribute("x", (block.start || 0.001) / unit + 0.5 + "%");
+      blockLabel.setAttribute("x", x + 0.5 + "%");
       blockLabel.setAttribute("width", blockWidth / unit + "%");
-    } else if ((block.start || 0.001) / unit + blockWidth / unit < 80) {
-      blockLabel.setAttribute("x", (block.start || 0.001) / unit + blockWidth / unit + 0.5 + "%");
+    } else if (x + blockWidth / unit < 80) {
+      blockLabel.setAttribute("x", x + blockWidth / unit + 0.5 + "%");
     } else {
-      blockLabel.setAttribute("x", (block.start || 0.001) / unit - 0.5 + "%");
+      blockLabel.setAttribute("x", x - 0.5 + "%");
       blockLabel.setAttribute("text-anchor", "end");
     }
 
@@ -2107,26 +1655,18 @@ var _default = waterfall;
 exports["default"] = _default;
 
 
-},{"../helpers/dom":9,"../helpers/svg":15}],18:[function(require,module,exports){
+},{"../helpers/dom":6,"../helpers/svg":11}],14:[function(require,module,exports){
 "use strict";
 
 var _data = _interopRequireDefault(require("./data"));
 
 var _iFrameHolder = _interopRequireDefault(require("./helpers/iFrameHolder"));
 
-var _summaryTiles = _interopRequireDefault(require("./components/summaryTiles"));
-
 var _navigationTimeline = _interopRequireDefault(require("./components/navigationTimeline"));
-
-var _pieChart = _interopRequireDefault(require("./components/pieChart"));
-
-var _table = _interopRequireDefault(require("./components/table"));
 
 var _resourcesTimeline = _interopRequireDefault(require("./components/resourcesTimeline"));
 
 var _legend = _interopRequireDefault(require("./components/legend"));
-
-var _pageMetric = _interopRequireDefault(require("./components/pageMetric"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
@@ -2137,7 +1677,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "d
   }
 
   var onIFrameReady = function onIFrameReady(addComponentFn) {
-    [_summaryTiles["default"].init(), _navigationTimeline["default"].init(), _pieChart["default"].init(), _table["default"].init(), _resourcesTimeline["default"].init(), _legend["default"].init(), _pageMetric["default"].init()].forEach(function (componentBody) {
+    [_legend["default"].init(), new _resourcesTimeline["default"]().init(), _navigationTimeline["default"].init()].forEach(function (componentBody) {
       addComponentFn(componentBody);
     });
   };
@@ -2146,15 +1686,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "d
 })();
 
 
-},{"./components/legend":1,"./components/navigationTimeline":2,"./components/pageMetric":3,"./components/pieChart":4,"./components/resourcesTimeline":5,"./components/summaryTiles":6,"./components/table":7,"./data":8,"./helpers/iFrameHolder":11}],19:[function(require,module,exports){
-// clone data
-// setup iframe
-// load payload in iframe
-// send data to iframe
-"use strict";
-
-
-},{}],20:[function(require,module,exports){
+},{"./components/legend":1,"./components/navigationTimeline":2,"./components/resourcesTimeline":4,"./data":5,"./helpers/iFrameHolder":8}],15:[function(require,module,exports){
 "use strict";
 
 var _data = _interopRequireDefault(require("./data"));
@@ -2163,34 +1695,5 @@ var _tableLogger = _interopRequireDefault(require("./helpers/tableLogger"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-_tableLogger["default"].logTable({
-  name: "All loaded resources",
-  data: _data["default"].allResourcesCalc,
-  columns: ["name", "domain", "fileType", "initiatorType", "fileExtension", "loadtime", "isRequestToHost", "requestStartDelay", "dns", "tcp", "ttfb", "requestDuration", "ssl"]
-});
 
-_tableLogger["default"].logTables([{
-  name: "Requests by domain",
-  data: _data["default"].requestsByDomain
-}, {
-  name: "Requests by Initiator Type",
-  data: _data["default"].initiatorTypeCounts,
-  columns: ["initiatorType", "count", "perc"]
-}, {
-  name: "Requests by Initiator Type (host/external domain)",
-  data: _data["default"].initiatorTypeCountHostExt,
-  columns: ["initiatorType", "count", "perc"]
-}, {
-  name: "Requests by File Type",
-  data: _data["default"].fileTypeCounts,
-  columns: ["fileType", "count", "perc"]
-}]);
-
-
-},{"./data":8,"./helpers/tableLogger":16}],21:[function(require,module,exports){
-"use strict";
-
-
-},{}],22:[function(require,module,exports){
-arguments[4][19][0].apply(exports,arguments)
-},{"dup":19}]},{},[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]);
+},{"./data":5,"./helpers/tableLogger":12}]},{},[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]);

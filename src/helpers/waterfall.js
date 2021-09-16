@@ -6,7 +6,6 @@ import dom from "../helpers/dom";
 
 const waterfall = {};
 
-
 //model for block and segment
 waterfall.timeBlock = (name, start, end, cssClass, segments, rawResource) => {
 	return {
@@ -20,7 +19,8 @@ waterfall.timeBlock = (name, start, end, cssClass, segments, rawResource) => {
 	}
 };
 
-waterfall.setupTimeLine = (durationMs, blocks, marks, lines, title) => {
+waterfall.setupTimeLine = (startTimeAdjustment, durationMs, blocks, marks, lines, title) => {
+    const startTimeAdjustmentInMs = startTimeAdjustment * 1000;
 	const unit = durationMs / 100,
 		barsToShow = blocks
 			.filter((block) => (typeof block.start == "number" && typeof block.total == "number"))
@@ -103,7 +103,7 @@ waterfall.setupTimeLine = (durationMs, blocks, marks, lines, title) => {
 			rectHolder.appendChild(rect);
 			segments.forEach((segment) => {
 				if(segment.total > 0 && typeof segment.start === "number"){
-					rectHolder.appendChild(createRect(segment.total, 8, segment.start||0.001, y, segment.cssClass, segment.name + " (" + Math.round(segment.start) + "ms - " +  Math.round(segment.end) + "ms | total: " + Math.round(segment.total) + "ms)"));
+					rectHolder.appendChild(createRect(segment.total, 8, segment.start ? segment.start - startTimeAdjustmentInMs : 0.001, y, segment.cssClass, segment.name + " (" + Math.round(segment.start) + "ms - " +  Math.round(segment.end) + "ms | total: " + Math.round(segment.total) + "ms)"));
 				}
 			});
 			return rectHolder;
@@ -130,7 +130,7 @@ waterfall.setupTimeLine = (durationMs, blocks, marks, lines, title) => {
 	const createTimeWrapper = () => {
 		const timeHolder = svg.newEl("g", { class : "time-scale full-width" });
 		for(let i = 0, secs = durationMs / 1000, secPerc = 100 / secs; i <= secs; i++){
-			const lineLabel = svg.newTextEl(i + "sec",  diagramHeight);
+			const lineLabel = svg.newTextEl(i + startTimeAdjustment + "sec",  diagramHeight);
 			if(i > secs - 0.2){
 				lineLabel.setAttribute("x", secPerc * i - 0.5 + "%");
 				lineLabel.setAttribute("text-anchor", "end");
@@ -158,7 +158,7 @@ waterfall.setupTimeLine = (durationMs, blocks, marks, lines, title) => {
 		});
 
 		marks.forEach((mark, i) => {
-			const x = mark.startTime / unit;
+			const x = (mark.startTime - startTimeAdjustmentInMs) / unit;
 			const markHolder = svg.newEl("g", {
 				class : "mark-holder"
 			});
@@ -237,18 +237,19 @@ waterfall.setupTimeLine = (durationMs, blocks, marks, lines, title) => {
 		const blockWidth = block.total||1;
 
 		const y = 25 * i;
-		timeLineHolder.appendChild(createRect(blockWidth, 25, block.start||0.001, y, block.cssClass, block.name + " (" + block.start + "ms - " + block.end + "ms | total: " + block.total + "ms)", block.segments));
+		timeLineHolder.appendChild(createRect(blockWidth, 25, block.start ? block.start - startTimeAdjustmentInMs : 0.001, y, block.cssClass, block.name + " (" + block.start + "ms - " + block.end + "ms | total: " + block.total + "ms)", block.segments));
 
 		const blockLabel = svg.newTextEl(block.name + " (" + Math.round(block.total) + "ms)", (y + (block.segments? 20 : 17)));
 
+        const x = ((block.start ? block.start - startTimeAdjustmentInMs : 0.001) / unit);
 		if(((block.total||1) / unit) > 10 && svg.getNodeTextWidth(blockLabel) < 200){
 			blockLabel.setAttribute("class", "inner-label");
-			blockLabel.setAttribute("x", ((block.start||0.001) / unit) + 0.5 + "%");
+			blockLabel.setAttribute("x", x + 0.5 + "%");
 			blockLabel.setAttribute("width", (blockWidth / unit) + "%");
-		}else if(((block.start||0.001) / unit) + (blockWidth / unit) < 80){
-			blockLabel.setAttribute("x", ((block.start||0.001) / unit) + (blockWidth / unit) + 0.5 + "%");
+		}else if(x + (blockWidth / unit) < 80){
+			blockLabel.setAttribute("x", x + (blockWidth / unit) + 0.5 + "%");
 		}else {
-			blockLabel.setAttribute("x", (block.start||0.001) / unit - 0.5 + "%");
+			blockLabel.setAttribute("x", x - 0.5 + "%");
 			blockLabel.setAttribute("text-anchor", "end");
 		}
 		blockLabel.style.opacity = block.name.match(/js.map$/) ? "0.5" : "1";
@@ -263,9 +264,6 @@ waterfall.setupTimeLine = (durationMs, blocks, marks, lines, title) => {
 		}));
 	}
 	chartHolder.appendChild(timeLineHolder);
-
-
-
 
 	return chartHolder;
 };

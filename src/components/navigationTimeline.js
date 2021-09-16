@@ -62,13 +62,13 @@ navigationTimelineComponent.init = () => {
 		perfTimingCalc.blocks.push(waterfall.timeBlock("measure:" + measure.name, Math.round(measure.startTime), Math.round(measure.startTime + measure.duration), "block-custom-measure"));
 	});
 
-	tableLogger.logTables([
-		{name: "Navigation Timeline", data : perfTimingCalc.blocks, columns : ["name", "start", "end", "total"]},
-		{name: "Navigation Events", data : perfTimingCalc.output},
-		{name: "Marks", data : data.marks, columns : ["name", "startTime", "duration"]}
-	]);
+	// tableLogger.logTables([
+	// 	{name: "Navigation Timeline", data : perfTimingCalc.blocks, columns : ["name", "start", "end", "total"]},
+	// 	{name: "Navigation Events", data : perfTimingCalc.output},
+	// 	{name: "Marks", data : data.marks, columns : ["name", "startTime", "duration"]}
+	// ]);
 
-	return waterfall.setupTimeLine(Math.round(perfTimingCalc.pageLoadTime), perfTimingCalc.blocks, data.marks, [], "Navigation Timing");
+	return waterfall.setupTimeLine(0, Math.round(perfTimingCalc.pageLoadTime), perfTimingCalc.blocks, data.marks, [], "Navigation Timing");
 };
 
 export default navigationTimelineComponent;
