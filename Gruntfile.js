@@ -3,7 +3,7 @@ module.exports = (grunt) => {
 
 	require("load-grunt-tasks")(grunt);
 
-	const banner = "/* https://github.com/micmro/performance-bookmarklet by Michael Mrowetz @MicMro\n   build:<%= grunt.template.today(\"dd/mm/yyyy\") %> */\n";
+	const banner = "/* https://github.com/dengzhizhi/performance-bookmarklet/tree/enhanced-resource-timeline by Zhizhi Deng\n   build:<%= grunt.template.today(\"dd/mm/yyyy\") %> */\n";
 
 	grunt.initConfig({
 		copy : {
