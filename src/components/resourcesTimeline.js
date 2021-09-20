@@ -11,6 +11,9 @@ class ResourceTimelineComponent {
         this.domain = "all";
         this.startTime = 0;
         this.endTime = null;
+        this.markFrom = null;
+        this.excludeDomainPattern = "";
+        this.includeDomainPattern = "";
     }
 
     isPartial() {
@@ -117,17 +120,31 @@ class ResourceTimelineComponent {
         const self = this;
         const startTimeInMs = self.startTime * 1000;
         const endTimeLimitInMs = self.endTime ? self.endTime * 1000 : null;
+        const includeRegex = (self.includeDomainPattern && self.includeDomainPattern.trim() !== "")
+            ? new RegExp(self.includeDomainPattern)
+            : null;
+        const excludeRegex = (self.excludeDomainPattern && self.excludeDomainPattern.trim() !== "")
+            ? new RegExp(self.excludeDomainPattern)
+            : null;
+        // Resource filter
         const chartData = self.getChartData((resource) =>
             (self.domain === "all" || resource.domain === self.domain) &&
             resource.startTime >= startTimeInMs &&
-            (!endTimeLimitInMs || resource.startTime <= endTimeLimitInMs)
+            (!endTimeLimitInMs || resource.startTime <= endTimeLimitInMs) &&
+            (!includeRegex || includeRegex.exec(resource.name)) &&
+            (!excludeRegex || !excludeRegex.exec(resource.name))
         );
         const endTimeInMs = startTimeInMs + chartData.loadDuration;
         const tempChartHolder = waterfall.setupTimeLine(
             self.startTime,
             chartData.loadDuration,
             chartData.blocks,
-            data.marks.filter((it) => it.startTime >= startTimeInMs && it.startTime <= endTimeInMs),
+            // Mark filter
+            data.marks.filter((it) =>
+                it.startTime >= startTimeInMs &&
+                it.startTime <= endTimeInMs &&
+                (!self.markFrom || it.startTime >= self.markFrom * 1000)
+            ),
             chartData.bg,
             "Temp",
         );
@@ -141,6 +158,50 @@ class ResourceTimelineComponent {
         let chartData = self.getChartData();
         const chartHolder = waterfall.setupTimeLine(self.startTime, chartData.loadDuration, chartData.blocks, data.marks, chartData.bg, "Resource Timing");
         const chartSvg = chartHolder.getElementsByClassName("water-fall-chart")[0];
+
+        // Add exclude pattern editor
+        const excludeDomainPatternEditor = dom.newTag("textarea", {
+            class: "exclude-pattern-editor",
+            placeholder: "Exclude pattern",
+            onblur: (e) => {
+                const time = e.target.value;
+                self.excludeDomainPattern = e.target.value.trim() || "";
+                self.refreshSVG(chartHolder);
+            }
+        })
+        chartSvg.parentNode.insertBefore(excludeDomainPatternEditor, chartSvg);
+
+        // Add exclude pattern editor
+        const includeDomainPatternEditor = dom.newTag("textarea", {
+            class: "include-pattern-editor",
+            placeholder: "Include pattern",
+            onblur: (e) => {
+                const time = e.target.value;
+                self.includeDomainPattern = e.target.value.trim() || "";
+                self.refreshSVG(chartHolder);
+            }
+        })
+        chartSvg.parentNode.insertBefore(includeDomainPatternEditor, chartSvg);
+
+        // Add mark from selector
+        const markFromSelector = dom.newTag("select", {
+            class: "mark-from-selector",
+            onchange: (e) => {
+                const time = e.target.options[e.target.selectedIndex].value;
+                self.markFrom = time !== "all" ? parseInt(time) : null;
+                self.refreshSVG(chartHolder);
+            }
+        });
+        markFromSelector.appendChild(dom.newTag("option", {
+            text : "Mark From",
+            value : "all",
+        }));
+        for (let i = 1; i <= 25; i++) {
+            markFromSelector.appendChild(dom.newTag("option", {
+                text : i
+            }));
+        }
+        chartSvg.parentNode.insertBefore(markFromSelector, chartSvg);
 
         // Add end time selector
         const endTimeSelector = dom.newTag("select", {
@@ -184,7 +245,6 @@ class ResourceTimelineComponent {
 
         // Domain selector
         if(data.requestsByDomain.length > 1){
-            debugger;
             const selectBox = dom.newTag("select", {
                 class : "domain-selector",
                 onchange : (e) => {

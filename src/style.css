@@ -145,7 +145,20 @@ h1 {font:bold 18px/18px sans-serif; margin:1em 0; color:#666;}
 .time-scale line {stroke:#0cc; stroke-width:1;}
 .time-scale text {font-weight:bold;}
 
-.domain-selector, .start-time-selector, .end-time-selector { float:right; }
+.domain-selector,
+.start-time-selector,
+.end-time-selector,
+.exclude-pattern-editor,
+.include-pattern-editor,
+.mark-from-selector
+{ float:right; }
+
+.exclude-pattern-editor,
+.include-pattern-editor
+{
+    width: 150px;
+    word-break: break-all;
+}
 
 /*Navigation Timing*/
 .navigation-timing {}
