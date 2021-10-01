@@ -29,7 +29,7 @@ waterfall.setupTimeLine = (startTimeAdjustment, durationMs, blocks, marks, lines
 			return Math.max((typeof currMax == "number" ? currMax : 0), svg.getNodeTextWidth( svg.newTextEl(currValue.name, "0")));
 		}) : 0,
 		diagramHeight = (barsToShow.length + 1) * 25,
-		chartHolderHeight = diagramHeight + maxMarkTextLength + 35;
+		chartHolderHeight = diagramHeight + maxMarkTextLength + 100;
 
 	const chartHolder = dom.newTag("section", {
 		class : "resource-timing water-fall-holder chart-holder"
@@ -170,7 +170,7 @@ waterfall.setupTimeLine = (startTimeAdjustment, durationMs, blocks, marks, lines
 				x : x + "%"
 			});
 			mark.x = x;
-			const lineLabel = svg.newTextEl(mark.name,  diagramHeight + 25 );
+			const lineLabel = svg.newTextEl(mark.name + " ::::: (" + Math.round(mark.startTime) + "ms)",  diagramHeight + 25 );
 			//lineLabel.setAttribute("writing-mode", "tb");
 			lineLabel.setAttribute("x", x + "%");
 			lineLabel.setAttribute("stroke", "");
