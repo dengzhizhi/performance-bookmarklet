@@ -193,66 +193,64 @@ class ResourceTimelineComponent {
         chartSvg.parentNode.insertBefore(includeDomainPatternEditor, chartSvg);
 
         // Add mark from selector
-        const markFromSelector = dom.newTag("select", {
+        const handleMarkFromInput = (e) => {
+            const time = e.target.value;
+            self.markFrom = time ? parseInt(time) : null;
+            self.refreshSVG(chartHolder);
+        };
+
+        const markFromSelector = dom.newTag("input", {
             class: "mark-from-selector",
-            onchange: (e) => {
-                const time = e.target.options[e.target.selectedIndex].value;
-                self.markFrom = time !== "all" ? parseInt(time) : null;
-                self.refreshSVG(chartHolder);
+            type: "text",
+            placeholder: "Mark From (seconds)",
+            value: self.markFrom || "",
+            onblur: handleMarkFromInput,
+            onkeydown: (e) => {
+                if (e.key === 'Enter') {
+                    handleMarkFromInput(e);
+                }
             }
         });
-        markFromSelector.appendChild(dom.newTag("option", {
-            text : "Mark From",
-            value : "all",
-        }));
-        for (let i = 1; i <= Math.floor(this.maxTime / 1000) + 1; i++) {
-            markFromSelector.appendChild(dom.newTag("option", {
-                text : i,
-                selected: self.markFrom === i
-            }));
-        }
         chartSvg.parentNode.insertBefore(markFromSelector, chartSvg);
 
         // Add end time selector
-        const endTimeSelector = dom.newTag("select", {
+        const handleTimeInput = (e, isStartTime) => {
+            const time = e.target.value;
+            if (isStartTime) {
+                self.startTime = time ? parseInt(time) : 0;
+            } else {
+                self.endTime = time ? parseInt(time) : null;
+            }
+            self.refreshSVG(chartHolder);
+        };
+
+        const endTimeSelector = dom.newTag("input", {
             class: "end-time-selector",
-            onchange: (e) => {
-                const time = e.target.options[e.target.selectedIndex].value;
-                self.endTime = time !== "all" ? parseInt(time) : null;
-                self.refreshSVG(chartHolder);
+            type: "text",
+            placeholder: "To (seconds)",
+            value: self.endTime || "",
+            onblur: (e) => handleTimeInput(e, false),
+            onkeydown: (e) => {
+                if (e.key === 'Enter') {
+                    handleTimeInput(e, false);
+                }
             }
         });
-        endTimeSelector.appendChild(dom.newTag("option", {
-            text : "To",
-            value : "all",
-        }));
-        for (let i = 1; i <= Math.floor(this.maxTime / 1000) + 1; i++) {
-            endTimeSelector.appendChild(dom.newTag("option", {
-                text : i,
-                selected: self.endTime === i
-            }));
-        }
         chartSvg.parentNode.insertBefore(endTimeSelector, chartSvg);
 
         // Add start time selector
-        const startTimeSelector = dom.newTag("select", {
+        const startTimeSelector = dom.newTag("input", {
             class: "start-time-selector",
-            onchange: (e) => {
-                const time = e.target.options[e.target.selectedIndex].value;
-                self.startTime = time ? parseInt(time) : 0;
-                self.refreshSVG(chartHolder);
+            type: "text",
+            placeholder: "From (seconds)",
+            value: self.startTime || "0",
+            onblur: (e) => handleTimeInput(e, true),
+            onkeydown: (e) => {
+                if (e.key === 'Enter') {
+                    handleTimeInput(e, true);
+                }
             }
         });
-        startTimeSelector.appendChild(dom.newTag("option", {
-            text : "From",
-            value : "0",
-        }));
-        for (let i = 1; i <= Math.floor(this.maxTime / 1000) + 1; i++) {
-            startTimeSelector.appendChild(dom.newTag("option", {
-                text : i,
-                selected: self.startTime === i
-            }));
-        }
         chartSvg.parentNode.insertBefore(startTimeSelector, chartSvg);
 
         // Domain selector
