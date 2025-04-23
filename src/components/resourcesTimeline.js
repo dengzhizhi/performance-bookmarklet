@@ -14,8 +14,13 @@ class ResourceTimelineComponent {
         this.markFrom = null;
         this.excludeDomainPattern = "";
         this.includeDomainPattern = "";
+        this.maxTime = 5 * 60 * 1000; // 5 minutes, timeline could be messy, use time filters to zoom in
     }
 
+    /**
+     * Check if the timeline is partial, i.e. if it is zoomed in
+     * @returns {boolean}
+     */
     isPartial() {
         return !(this.startTime === 0 && this.endTime === null);
     }
@@ -70,7 +75,7 @@ class ResourceTimelineComponent {
 
         data.allResourcesCalc.filter((resource) => {
             //do not show items up to 20 seconds after onload - else beacon ping etc make diagram useless
-            return resource.startTime < (calc.loadEventEnd + 20000)
+            return resource.startTime < (calc.loadEventEnd + this.maxTime)
         })
             .filter(filter||(() => true))
             .forEach((resource, i) => {
@@ -102,7 +107,9 @@ class ResourceTimelineComponent {
             });
 
         const loadDuration = self.isPartial()
-            ? Math.max((calc.blocks.map((it) => it.end).reduce((r, v) => Math.max(r, v), 1000) || self.startTime * 1000) - self.startTime * 1000, 1000) 
+            ? Math.max(
+                (calc.blocks.map((it) => it.end).reduce((r, v) => Math.max(r, v), 1000) || self.startTime * 1000) - self.startTime * 1000,
+                ((self.endTime || self.startTime) - self.startTime + 1) * 1000) 
             : Math.round(Math.max(calc.lastResponseEnd, (data.perfTiming.loadEventEnd-data.perfTiming.navigationStart)));
 
         return {
@@ -196,7 +203,7 @@ class ResourceTimelineComponent {
             text : "Mark From",
             value : "all",
         }));
-        for (let i = 1; i <= 25; i++) {
+        for (let i = 1; i <= Math.floor(this.maxTime / 1000) + 1; i++) {
             markFromSelector.appendChild(dom.newTag("option", {
                 text : i
             }));
@@ -216,7 +223,7 @@ class ResourceTimelineComponent {
             text : "To",
             value : "all",
         }));
-        for (let i = 1; i <= 25; i++) {
+        for (let i = 1; i <= Math.floor(this.maxTime / 1000) + 1; i++) {
             endTimeSelector.appendChild(dom.newTag("option", {
                 text : i
             }));
@@ -236,7 +243,7 @@ class ResourceTimelineComponent {
             text : "From",
             value : "0",
         }));
-        for (let i = 1; i <= 20; i++) {
+        for (let i = 1; i <= Math.floor(this.maxTime / 1000) + 1; i++) {
             startTimeSelector.appendChild(dom.newTag("option", {
                 text : i
             }));

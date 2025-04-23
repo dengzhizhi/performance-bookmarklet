@@ -1,5 +1,5 @@
 /* https://github.com/dengzhizhi/performance-bookmarklet/tree/enhanced-resource-timeline by Zhizhi Deng
-   build:01/10/2021 */
+   build:23/04/2025 */
 
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
@@ -261,7 +261,13 @@ function () {
     this.markFrom = null;
     this.excludeDomainPattern = "";
     this.includeDomainPattern = "";
+    this.maxTime = 5 * 60 * 1000; // 5 minutes, timeline could be messy, use time filters to zoom in
   }
+  /**
+   * Check if the timeline is partial, i.e. if it is zoomed in
+   * @returns {boolean}
+   */
+
 
   _createClass(ResourceTimelineComponent, [{
     key: "isPartial",
@@ -271,6 +277,8 @@ function () {
   }, {
     key: "getChartData",
     value: function getChartData(filter) {
+      var _this = this;
+
       var self = this;
       var calc = {
         pageLoadTime: _data["default"].perfTiming.loadEventEnd - _data["default"].perfTiming.responseStart,
@@ -309,7 +317,7 @@ function () {
 
       _data["default"].allResourcesCalc.filter(function (resource) {
         //do not show items up to 20 seconds after onload - else beacon ping etc make diagram useless
-        return resource.startTime < calc.loadEventEnd + 20000;
+        return resource.startTime < calc.loadEventEnd + _this.maxTime;
       }).filter(filter || function () {
         return true;
       }).forEach(function (resource, i) {
@@ -335,7 +343,7 @@ function () {
         return it.end;
       }).reduce(function (r, v) {
         return Math.max(r, v);
-      }, 1000) || self.startTime * 1000) - self.startTime * 1000, 1000) : Math.round(Math.max(calc.lastResponseEnd, _data["default"].perfTiming.loadEventEnd - _data["default"].perfTiming.navigationStart));
+      }, 1000) || self.startTime * 1000) - self.startTime * 1000, ((self.endTime || self.startTime) - self.startTime + 1) * 1000) : Math.round(Math.max(calc.lastResponseEnd, _data["default"].perfTiming.loadEventEnd - _data["default"].perfTiming.navigationStart));
       return {
         loadDuration: loadDuration,
         blocks: calc.blocks,
@@ -413,7 +421,7 @@ function () {
         value: "all"
       }));
 
-      for (var i = 1; i <= 25; i++) {
+      for (var i = 1; i <= Math.floor(this.maxTime / 1000) + 1; i++) {
         markFromSelector.appendChild(_dom["default"].newTag("option", {
           text: i
         }));
@@ -435,7 +443,7 @@ function () {
         value: "all"
       }));
 
-      for (var _i = 1; _i <= 25; _i++) {
+      for (var _i = 1; _i <= Math.floor(this.maxTime / 1000) + 1; _i++) {
         endTimeSelector.appendChild(_dom["default"].newTag("option", {
           text: _i
         }));
@@ -457,7 +465,7 @@ function () {
         value: "0"
       }));
 
-      for (var _i2 = 1; _i2 <= 20; _i2++) {
+      for (var _i2 = 1; _i2 <= Math.floor(this.maxTime / 1000) + 1; _i2++) {
         startTimeSelector.appendChild(_dom["default"].newTag("option", {
           text: _i2
         }));
