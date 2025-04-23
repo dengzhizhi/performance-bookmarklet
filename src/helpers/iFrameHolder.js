@@ -52,15 +52,15 @@ const initHolderEl = () => {
 	}
 };
 
-let addComponent = (domEl) => {
-	if(domEl) {
+const addComponent = (domEl) => {
+	if (domEl) {
 		outputContent.appendChild(domEl);
 	}
 };
 
-let getOutputIFrame = () => {
-	return outputIFrame
-}
+const getOutputIFrame = () => {
+	return outputIFrame;
+};
 
 export default  {
 	/**
@@ -107,6 +107,17 @@ export default  {
 				}
 			}, "position:absolute; top:1%; right:1%; margin-bottom:1em; left:1%; z-index:6543210; width:98%; border:0; box-shadow:0 0 25px 0 rgba(0,0,0,0.5); background:#fff;");
 			document.body.appendChild(iFrameEl);
+
+			// Create external close button after iframe
+			const externalCloseBtn = dom.newTag("button", {
+				text: "close"
+			});
+			externalCloseBtn.style.cssText = "position:fixed; top:1em; right:1em; padding:0.5em 1em; z-index:6543212; background:rgba(255,255,255,0.9); border:1px solid #ccc; border-radius:4px; cursor:pointer; font-size:14px; color:#333; box-shadow:0 2px 4px rgba(0,0,0,0.1);";
+			externalCloseBtn.addEventListener("click", () => {
+				iFrameEl.parentNode.removeChild(iFrameEl);
+				externalCloseBtn.parentNode.removeChild(externalCloseBtn);
+			});
+			document.body.appendChild(externalCloseBtn);
 		}
 	},
 	getOutputIFrame: getOutputIFrame
