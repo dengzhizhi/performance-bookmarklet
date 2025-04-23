@@ -253,15 +253,17 @@ var ResourceTimelineComponent =
 /*#__PURE__*/
 function () {
   function ResourceTimelineComponent() {
+    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
     _classCallCheck(this, ResourceTimelineComponent);
 
-    this.domain = "all";
-    this.startTime = 0;
-    this.endTime = null;
-    this.markFrom = null;
-    this.excludeDomainPattern = "";
-    this.includeDomainPattern = "";
-    this.maxTime = 5 * 60 * 1000; // 5 minutes, timeline could be messy, use time filters to zoom in
+    this.domain = options.domain || "all";
+    this.startTime = options.startTime || 0;
+    this.endTime = options.endTime || null;
+    this.markFrom = options.markFrom || null;
+    this.excludeDomainPattern = options.excludeDomainPattern || "";
+    this.includeDomainPattern = options.includeDomainPattern || "";
+    this.maxTime = (options.maxTime || 5 * 60) * 1000; // default to 5 minutes, timeline could be messy, use time filters to zoom in
   }
   /**
    * Check if the timeline is partial, i.e. if it is zoomed in
@@ -386,6 +388,7 @@ function () {
       var excludeDomainPatternEditor = _dom["default"].newTag("textarea", {
         "class": "exclude-pattern-editor",
         placeholder: "Exclude pattern",
+        value: self.excludeDomainPattern,
         onblur: function onblur(e) {
           var time = e.target.value;
           self.excludeDomainPattern = e.target.value.trim() || "";
@@ -398,6 +401,7 @@ function () {
       var includeDomainPatternEditor = _dom["default"].newTag("textarea", {
         "class": "include-pattern-editor",
         placeholder: "Include pattern",
+        value: self.includeDomainPattern,
         onblur: function onblur(e) {
           var time = e.target.value;
           self.includeDomainPattern = e.target.value.trim() || "";
@@ -423,7 +427,8 @@ function () {
 
       for (var i = 1; i <= Math.floor(this.maxTime / 1000) + 1; i++) {
         markFromSelector.appendChild(_dom["default"].newTag("option", {
-          text: i
+          text: i,
+          selected: self.markFrom === i
         }));
       }
 
@@ -445,7 +450,8 @@ function () {
 
       for (var _i = 1; _i <= Math.floor(this.maxTime / 1000) + 1; _i++) {
         endTimeSelector.appendChild(_dom["default"].newTag("option", {
-          text: _i
+          text: _i,
+          selected: self.endTime === _i
         }));
       }
 
@@ -467,7 +473,8 @@ function () {
 
       for (var _i2 = 1; _i2 <= Math.floor(this.maxTime / 1000) + 1; _i2++) {
         startTimeSelector.appendChild(_dom["default"].newTag("option", {
-          text: _i2
+          text: _i2,
+          selected: self.startTime === _i2
         }));
       }
 
@@ -484,12 +491,14 @@ function () {
 
         selectBox.appendChild(_dom["default"].newTag("option", {
           text: "show all",
-          value: "all"
+          value: "all",
+          selected: self.domain === "all"
         }));
 
         _data["default"].requestsByDomain.forEach(function (domain) {
           selectBox.appendChild(_dom["default"].newTag("option", {
-            text: domain.domain
+            text: domain.domain,
+            selected: self.domain === domain.domain
           }));
         });
 
@@ -513,7 +522,7 @@ exports["default"] = _default;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports["default"] = void 0;
+exports["default"] = exports.initData = void 0;
 
 var _helpers = _interopRequireDefault(require("./helpers/helpers"));
 
@@ -561,7 +570,11 @@ var supportsFeatures = function supportsFeatures() {
   return true;
 };
 
-(function () {
+var initData = function initData() {
+  data.resources = [];
+  data.marks = [];
+  data.measures = [];
+  data.allResourcesCalc = [];
   _isValid = supportsFeatures();
   data.allResourcesCalc = data.resources //remove this bookmarklet from the result
   .filter(function (currR) {
@@ -678,8 +691,10 @@ var supportsFeatures = function supportsFeatures() {
       return a + b.duration;
     }) / data.slowestCalls.length);
   }
-})();
+};
 
+exports.initData = initData;
+initData();
 var _default = data;
 exports["default"] = _default;
 
@@ -1066,7 +1081,7 @@ exports["default"] = _default;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports["default"] = void 0;
+exports["default"] = exports.clearIframeHolder = void 0;
 
 var _dom = _interopRequireDefault(require("../helpers/dom"));
 
@@ -1098,7 +1113,19 @@ var outputContent;
  */
 
 var outputIFrame;
+/**
+ * Clear the iFrame holder
+ */
+
+var clearIframeHolder = function clearIframeHolder() {
+  outputHolder = null;
+  outputContent = null;
+  outputIFrame = null;
+};
 /** setup iFrame overlay */
+
+
+exports.clearIframeHolder = clearIframeHolder;
 
 var initHolderEl = function initHolderEl() {
   // find or create holder element
@@ -1742,9 +1769,9 @@ exports["default"] = _default;
 },{"../helpers/dom":6,"../helpers/svg":11}],14:[function(require,module,exports){
 "use strict";
 
-var _data = _interopRequireDefault(require("./data"));
+var _data = _interopRequireWildcard(require("./data"));
 
-var _iFrameHolder = _interopRequireDefault(require("./helpers/iFrameHolder"));
+var _iFrameHolder = _interopRequireWildcard(require("./helpers/iFrameHolder"));
 
 var _navigationTimeline = _interopRequireDefault(require("./components/navigationTimeline"));
 
@@ -1754,20 +1781,40 @@ var _legend = _interopRequireDefault(require("./components/legend"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-(function () {
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj["default"] = obj; return newObj; } }
+
+// increase performance resource timing buffer size to 1500
+window.performance.setResourceTimingBufferSize(1500);
+
+var showPerformanceBookmarklet = function showPerformanceBookmarklet() {
+  var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
   //skip browser internal pages or when data is invalid
   if (location.protocol === "about:" || !_data["default"].isValid()) {
     return;
   }
 
   var onIFrameReady = function onIFrameReady(addComponentFn) {
-    [_legend["default"].init(), new _resourcesTimeline["default"]().init(), _navigationTimeline["default"].init()].forEach(function (componentBody) {
+    [_legend["default"].init(), new _resourcesTimeline["default"](options).init(), _navigationTimeline["default"].init()].forEach(function (componentBody) {
       addComponentFn(componentBody);
     });
   };
 
   _iFrameHolder["default"].setup(onIFrameReady);
-})();
+}; // Expose the function globally
+
+
+window.showPerformanceBookmarklet = function (options) {
+  // let's clear the module-level variables in iFrameHolder first
+  (0, _iFrameHolder.clearIframeHolder)();
+  (0, _data.initData)();
+  showPerformanceBookmarklet(options);
+}; // Run on initial load
+
+
+showPerformanceBookmarklet(); // Display help information
+
+console.log("\nPerformance Bookmarklet Help\n===========================\n\nYou can use window.showPerformanceBookmarklet(options) to show the performance data with custom options:\n\nOptions:\n--------\nmaxTime: number (default: 300)\n    Maximum time in minutes to display in the timeline\n    Example: maxTime: 50 // shows 50 seconds of data\n\ndomain: string (default: \"all\")\n    Filter resources by domain\n    Example: domain: \"example.com\"\n\nstartTime: number (default: 0)\n    Start time in seconds from the beginning\n    Example: startTime: 2 // starts from 2 seconds\n\nendTime: number (default: null)\n    End time in seconds from the beginning\n    Example: endTime: 5 // ends at 5 seconds\n\nmarkFrom: number (default: null)\n    Show marks from this time in seconds\n    Example: markFrom: 3 // shows marks from 3 seconds\n\nexcludeDomainPattern: string (default: \"\")\n    Regex pattern to exclude resources\n    Example: excludeDomainPattern: \"analytics\"\n\nincludeDomainPattern: string (default: \"\")\n    Regex pattern to include resources\n    Example: includeDomainPattern: \"api\"\n\nExample usage:\n-------------\nwindow.showPerformanceBookmarklet({\n    maxTime: 10,\n    domain: \"example.com\",\n    startTime: 2,\n    endTime: 5,\n    markFrom: 3,\n    excludeDomainPattern: \"analytics\",\n    includeDomainPattern: \"api\"\n});\n");
 
 
 },{"./components/legend":1,"./components/navigationTimeline":2,"./components/resourcesTimeline":4,"./data":5,"./helpers/iFrameHolder":8}],15:[function(require,module,exports){

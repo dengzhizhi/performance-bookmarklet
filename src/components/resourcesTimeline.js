@@ -7,14 +7,14 @@ import dom from "../helpers/dom";
 import waterfall from "../helpers/waterfall";
 
 class ResourceTimelineComponent {
-    constructor() {
-        this.domain = "all";
-        this.startTime = 0;
-        this.endTime = null;
-        this.markFrom = null;
-        this.excludeDomainPattern = "";
-        this.includeDomainPattern = "";
-        this.maxTime = 5 * 60 * 1000; // 5 minutes, timeline could be messy, use time filters to zoom in
+    constructor(options = {}) {
+        this.domain = options.domain || "all";
+        this.startTime = options.startTime || 0;
+        this.endTime = options.endTime || null;
+        this.markFrom = options.markFrom || null;
+        this.excludeDomainPattern = options.excludeDomainPattern || "";
+        this.includeDomainPattern = options.includeDomainPattern || "";
+        this.maxTime = (options.maxTime || (5 * 60)) * 1000; // default to 5 minutes, timeline could be messy, use time filters to zoom in
     }
 
     /**
@@ -170,6 +170,7 @@ class ResourceTimelineComponent {
         const excludeDomainPatternEditor = dom.newTag("textarea", {
             class: "exclude-pattern-editor",
             placeholder: "Exclude pattern",
+            value: self.excludeDomainPattern,
             onblur: (e) => {
                 const time = e.target.value;
                 self.excludeDomainPattern = e.target.value.trim() || "";
@@ -182,6 +183,7 @@ class ResourceTimelineComponent {
         const includeDomainPatternEditor = dom.newTag("textarea", {
             class: "include-pattern-editor",
             placeholder: "Include pattern",
+            value: self.includeDomainPattern,
             onblur: (e) => {
                 const time = e.target.value;
                 self.includeDomainPattern = e.target.value.trim() || "";
@@ -205,7 +207,8 @@ class ResourceTimelineComponent {
         }));
         for (let i = 1; i <= Math.floor(this.maxTime / 1000) + 1; i++) {
             markFromSelector.appendChild(dom.newTag("option", {
-                text : i
+                text : i,
+                selected: self.markFrom === i
             }));
         }
         chartSvg.parentNode.insertBefore(markFromSelector, chartSvg);
@@ -225,7 +228,8 @@ class ResourceTimelineComponent {
         }));
         for (let i = 1; i <= Math.floor(this.maxTime / 1000) + 1; i++) {
             endTimeSelector.appendChild(dom.newTag("option", {
-                text : i
+                text : i,
+                selected: self.endTime === i
             }));
         }
         chartSvg.parentNode.insertBefore(endTimeSelector, chartSvg);
@@ -245,7 +249,8 @@ class ResourceTimelineComponent {
         }));
         for (let i = 1; i <= Math.floor(this.maxTime / 1000) + 1; i++) {
             startTimeSelector.appendChild(dom.newTag("option", {
-                text : i
+                text : i,
+                selected: self.startTime === i
             }));
         }
         chartSvg.parentNode.insertBefore(startTimeSelector, chartSvg);
@@ -262,12 +267,14 @@ class ResourceTimelineComponent {
 
             selectBox.appendChild(dom.newTag("option", {
                 text : "show all",
-                value : "all"
+                value : "all",
+                selected: self.domain === "all"
             }));
 
             data.requestsByDomain.forEach((domain) => {
                 selectBox.appendChild(dom.newTag("option", {
-                    text : domain.domain
+                    text : domain.domain,
+                    selected: self.domain === domain.domain
                 }));
             });
             chartSvg.parentNode.insertBefore(selectBox, chartSvg);

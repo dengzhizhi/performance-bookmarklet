@@ -40,13 +40,17 @@ const supportsFeatures = () => {
 	return true;
 };
 
-(() =>  {
+export const initData = () =>  {
+	data.resources = [];
+	data.marks = [];
+	data.measures = [];
+	data.allResourcesCalc = [];
 
 	isValid = supportsFeatures();
 
 
 	data.allResourcesCalc = data.resources
-		//remove this bookmarklet from the result
+	//remove this bookmarklet from the result
 		.filter((currR) => !currR.name.match(/http[s]?\:\/\/(micmro|nurun).github.io\/performance-bookmarklet\/.*/))
 		.map((currR, i, arr) => {
 			//crunch the resources data into something easier to work with
@@ -165,6 +169,7 @@ const supportsFeatures = () => {
 			return a + b.duration;
 		}) / data.slowestCalls.length);
 	}
-})();
+};
+initData();
 
 export default data;

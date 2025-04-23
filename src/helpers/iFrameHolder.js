@@ -25,6 +25,15 @@ let outputContent;
  */
 let outputIFrame;
 
+/**
+ * Clear the iFrame holder
+ */
+export const clearIframeHolder = () => {
+	outputHolder = null;
+	outputContent = null;
+	outputIFrame = null;
+}
+
 /** setup iFrame overlay */
 const initHolderEl = () => {
 	// find or create holder element
