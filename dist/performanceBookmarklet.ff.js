@@ -1084,6 +1084,19 @@ var _default = {
    * @param  {function} onIFrameReady
    */
   setup: function setup(onIFrameReady) {
+    // Remove any existing instances
+    var existingIframe = document.getElementById("perfbook-iframe");
+
+    if (existingIframe) {
+      existingIframe.parentNode.removeChild(existingIframe);
+    }
+
+    var existingCloseBtn = document.getElementById("perfbook-close-external");
+
+    if (existingCloseBtn) {
+      existingCloseBtn.parentNode.removeChild(existingCloseBtn);
+    }
+
     iFrameEl = document.getElementById("perfbook-iframe");
 
     var finalize = function finalize() {
@@ -1122,6 +1135,7 @@ var _default = {
       document.body.appendChild(iFrameEl); // Create external close button after iframe
 
       var externalCloseBtn = _dom["default"].newTag("button", {
+        id: "perfbook-close-external",
         text: "close"
       });
 
