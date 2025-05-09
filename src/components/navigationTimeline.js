@@ -5,16 +5,41 @@ Logic for Naviagtion Timing API and Markers Waterfall
 import data from "../data";
 import tableLogger from "../helpers/tableLogger";
 import waterfall from "../helpers/waterfall";
+import dom from "../helpers/dom";
 
 const navigationTimelineComponent = {};
 
 navigationTimelineComponent.init = () => {
+	const chartHolder = dom.newTag("section", {
+		class : "resource-timing chart-holder"
+	});
+
+	const header = dom.newTag("div", {
+		class : "legend-header"
+	});
+
+	const title = dom.newTag("h3", {
+		text : "Navigation Timing"
+	});
+
+	const toggleButton = dom.newTag("button", {
+		class : "legend-toggle",
+		text : "▼"
+	});
+
+	header.appendChild(title);
+	header.appendChild(toggleButton);
+	chartHolder.appendChild(header);
+
+	const contentHolder = dom.newTag("div", {
+		class : "navigation-timing-content"
+	});
 
 	const startTime = data.perfTiming.navigationStart;
 	const perfTimingCalc = {
-			"pageLoadTime" : data.perfTiming.loadEventEnd - data.perfTiming.navigationStart,
-			"output" : []
-		};
+		"pageLoadTime" : data.perfTiming.loadEventEnd - data.perfTiming.navigationStart,
+		"output" : []
+	};
 
 	for(let perfProp in data.perfTiming) {
 		if(data.perfTiming[perfProp] && typeof data.perfTiming[perfProp] === "number"){
@@ -62,13 +87,23 @@ navigationTimelineComponent.init = () => {
 		perfTimingCalc.blocks.push(waterfall.timeBlock("measure:" + measure.name, Math.round(measure.startTime), Math.round(measure.startTime + measure.duration), "block-custom-measure"));
 	});
 
-	// tableLogger.logTables([
-	// 	{name: "Navigation Timeline", data : perfTimingCalc.blocks, columns : ["name", "start", "end", "total"]},
-	// 	{name: "Navigation Events", data : perfTimingCalc.output},
-	// 	{name: "Marks", data : data.marks, columns : ["name", "startTime", "duration"]}
-	// ]);
+	const timeline = waterfall.setupTimeLine(0, Math.round(perfTimingCalc.pageLoadTime), perfTimingCalc.blocks, data.marks, [], "Navigation Timing");
+	contentHolder.appendChild(timeline);
+	chartHolder.appendChild(contentHolder);
 
-	return waterfall.setupTimeLine(0, Math.round(perfTimingCalc.pageLoadTime), perfTimingCalc.blocks, data.marks, [], "Navigation Timing");
+	// Add click handler for toggle
+	toggleButton.addEventListener("click", () => {
+		const isExpanded = contentHolder.classList.contains("expanded");
+		if (isExpanded) {
+			contentHolder.classList.remove("expanded");
+			toggleButton.classList.remove("rotated");
+		} else {
+			contentHolder.classList.add("expanded");
+			toggleButton.classList.add("rotated");
+		}
+	});
+
+	return chartHolder;
 };
 
 export default navigationTimelineComponent;

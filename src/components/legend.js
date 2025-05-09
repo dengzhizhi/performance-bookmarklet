@@ -1,11 +1,10 @@
 /*
-Logic for Legned
+Logic for Legend
 */
 
 import dom from "../helpers/dom";
 
 const legendComponent = {};
-
 
 const createLegend = (className, title, dlArray) => {
 	const legendHolder = dom.newTag("div", {
@@ -36,17 +35,29 @@ const createLegend = (className, title, dlArray) => {
 
 //Legend
 legendComponent.init = () => {
-
 	const chartHolder = dom.newTag("section", {
 		class : "resource-timing chart-holder"
 	});
 
-	chartHolder.appendChild(dom.newTag("h3", {
+	const header = dom.newTag("div", {
+		class : "legend-header"
+	});
+
+	const title = dom.newTag("h3", {
 		text : "Legend"
-	}));
+	});
+
+	const toggleButton = dom.newTag("button", {
+		class : "legend-toggle",
+		text : "▼"
+	});
+
+	header.appendChild(title);
+	header.appendChild(toggleButton);
+	chartHolder.appendChild(header);
 
 	const legendsHolder = dom.newTag("div", {
-		class : "legends-group "
+		class : "legends-group"
 	});
 
 	legendsHolder.appendChild(createLegend("initiator-type-legend", "Block color: Initiator Type", [
@@ -86,6 +97,18 @@ legendComponent.init = () => {
 	]));
 
 	chartHolder.appendChild(legendsHolder);
+
+	// Add click handler for toggle
+	toggleButton.addEventListener("click", () => {
+		const isExpanded = legendsHolder.classList.contains("expanded");
+		if (isExpanded) {
+			legendsHolder.classList.remove("expanded");
+			toggleButton.classList.remove("rotated");
+		} else {
+			legendsHolder.classList.add("expanded");
+			toggleButton.classList.add("rotated");
+		}
+	});
 
 	return chartHolder;
 };
