@@ -166,77 +166,38 @@ class ResourceTimelineComponent {
         const chartHolder = waterfall.setupTimeLine(self.startTime, chartData.loadDuration, chartData.blocks, data.marks, chartData.bg, "Resource Timing");
         const chartSvg = chartHolder.getElementsByClassName("water-fall-chart")[0];
 
-        // Add exclude pattern editor
-        const excludeDomainPatternEditor = dom.newTag("textarea", {
-            class: "exclude-pattern-editor",
-            placeholder: "Exclude pattern",
-            value: self.excludeDomainPattern,
-            onblur: (e) => {
-                const time = e.target.value;
-                self.excludeDomainPattern = e.target.value.trim() || "";
-                self.refreshSVG(chartHolder);
-            }
-        })
-        chartSvg.parentNode.insertBefore(excludeDomainPatternEditor, chartSvg);
-
-        // Add exclude pattern editor
-        const includeDomainPatternEditor = dom.newTag("textarea", {
-            class: "include-pattern-editor",
-            placeholder: "Include pattern",
-            value: self.includeDomainPattern,
-            onblur: (e) => {
-                const time = e.target.value;
-                self.includeDomainPattern = e.target.value.trim() || "";
-                self.refreshSVG(chartHolder);
-            }
-        })
-        chartSvg.parentNode.insertBefore(includeDomainPatternEditor, chartSvg);
-
-        // Add mark from selector
-        const handleMarkFromInput = (e) => {
-            const time = e.target.value;
-            self.markFrom = time ? parseInt(time) : null;
-            self.refreshSVG(chartHolder);
-        };
-
-        const markFromSelector = dom.newTag("input", {
-            class: "mark-from-selector",
-            type: "text",
-            placeholder: "Mark From (seconds)",
-            value: self.markFrom || "",
-            onblur: handleMarkFromInput,
-            onkeydown: (e) => {
-                if (e.key === 'Enter') {
-                    handleMarkFromInput(e);
-                }
-            }
+        // Create configuration panel
+        const configPanel = dom.newTag("div", {
+            class: "config-panel",
+            style: "margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 4px; display: flex; justify-content: flex-end; gap: 10px; align-items: center;"
         });
-        chartSvg.parentNode.insertBefore(markFromSelector, chartSvg);
 
-        // Add end time selector
-        const handleTimeInput = (e, isStartTime) => {
-            const time = e.target.value;
-            if (isStartTime) {
-                self.startTime = time ? parseInt(time) : 0;
-            } else {
-                self.endTime = time ? parseInt(time) : null;
-            }
-            self.refreshSVG(chartHolder);
-        };
-
-        const endTimeSelector = dom.newTag("input", {
-            class: "end-time-selector",
-            type: "text",
-            placeholder: "To (seconds)",
-            value: self.endTime || "",
-            onblur: (e) => handleTimeInput(e, false),
-            onkeydown: (e) => {
-                if (e.key === 'Enter') {
-                    handleTimeInput(e, false);
+        // Domain selector
+        if(data.requestsByDomain.length > 1) {
+            const selectBox = dom.newTag("select", {
+                class: "domain-selector",
+                style: "width: 150px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;",
+                onchange: (e) => {
+                    self.domain = e.target.options[e.target.selectedIndex].value;
+                    self.refreshSVG(chartHolder);
                 }
-            }
-        });
-        chartSvg.parentNode.insertBefore(endTimeSelector, chartSvg);
+            });
+
+            selectBox.appendChild(dom.newTag("option", {
+                text: "Show all",
+                value: "all",
+                selected: self.domain === "all"
+            }));
+
+            data.requestsByDomain.forEach((domain) => {
+                selectBox.appendChild(dom.newTag("option", {
+                    text: domain.domain,
+                    selected: self.domain === domain.domain
+                }));
+            });
+
+            configPanel.appendChild(selectBox);
+        }
 
         // Add start time selector
         const startTimeSelector = dom.newTag("input", {
@@ -244,39 +205,98 @@ class ResourceTimelineComponent {
             type: "text",
             placeholder: "From (seconds)",
             value: self.startTime || "0",
-            onblur: (e) => handleTimeInput(e, true),
+            style: "width: 100px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;",
+            onblur: (e) => {
+                const time = e.target.value;
+                self.startTime = time ? parseInt(time) : 0;
+                self.refreshSVG(chartHolder);
+            },
             onkeydown: (e) => {
                 if (e.key === 'Enter') {
-                    handleTimeInput(e, true);
+                    e.target.blur();
                 }
             }
         });
-        chartSvg.parentNode.insertBefore(startTimeSelector, chartSvg);
+        configPanel.appendChild(startTimeSelector);
 
-        // Domain selector
-        if(data.requestsByDomain.length > 1){
-            const selectBox = dom.newTag("select", {
-                class : "domain-selector",
-                onchange : (e) => {
-                    self.domain = e.target.options[e.target.selectedIndex].value;
-                    self.refreshSVG(chartHolder);
-                },
-            });
+        // Add end time selector
+        const endTimeSelector = dom.newTag("input", {
+            class: "end-time-selector",
+            type: "text",
+            placeholder: "To (seconds)",
+            value: self.endTime || "",
+            style: "width: 100px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;",
+            onblur: (e) => {
+                const time = e.target.value;
+                self.endTime = time ? parseInt(time) : null;
+                self.refreshSVG(chartHolder);
+            },
+            onkeydown: (e) => {
+                if (e.key === 'Enter') {
+                    e.target.blur();
+                }
+            }
+        });
+        configPanel.appendChild(endTimeSelector);
 
-            selectBox.appendChild(dom.newTag("option", {
-                text : "show all",
-                value : "all",
-                selected: self.domain === "all"
-            }));
+        // Add mark from selector
+        const markFromSelector = dom.newTag("input", {
+            class: "mark-from-selector",
+            type: "text",
+            placeholder: "Mark From (seconds)",
+            value: self.markFrom || "",
+            style: "width: 120px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;",
+            onblur: (e) => {
+                const time = e.target.value;
+                self.markFrom = time ? parseInt(time) : null;
+                self.refreshSVG(chartHolder);
+            },
+            onkeydown: (e) => {
+                if (e.key === 'Enter') {
+                    e.target.blur();
+                }
+            }
+        });
+        configPanel.appendChild(markFromSelector);
 
-            data.requestsByDomain.forEach((domain) => {
-                selectBox.appendChild(dom.newTag("option", {
-                    text : domain.domain,
-                    selected: self.domain === domain.domain
-                }));
-            });
-            chartSvg.parentNode.insertBefore(selectBox, chartSvg);
-        }
+        // Add include pattern editor
+        const includeDomainPatternEditor = dom.newTag("textarea", {
+            class: "include-pattern-editor",
+            placeholder: "Include pattern",
+            value: self.includeDomainPattern,
+            style: "width: 150px; min-height: 20px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; resize: none; overflow: hidden;",
+            oninput: (e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = (e.target.scrollHeight) + 'px';
+            },
+            onblur: (e) => {
+                self.includeDomainPattern = e.target.value.trim() || "";
+                self.refreshSVG(chartHolder);
+            }
+        });
+        includeDomainPatternEditor.textContent = self.includeDomainPattern;
+        configPanel.appendChild(includeDomainPatternEditor);
+
+        // Add exclude pattern editor
+        const excludeDomainPatternEditor = dom.newTag("textarea", {
+            class: "exclude-pattern-editor",
+            placeholder: "Exclude pattern",
+            value: self.excludeDomainPattern,
+            style: "width: 150px; min-height: 20px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; resize: none; overflow: hidden;",
+            oninput: (e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = (e.target.scrollHeight) + 'px';
+            },
+            onblur: (e) => {
+                self.excludeDomainPattern = e.target.value.trim() || "";
+                self.refreshSVG(chartHolder);
+            }
+        });
+        excludeDomainPatternEditor.textContent = self.excludeDomainPattern;
+        configPanel.appendChild(excludeDomainPatternEditor);
+
+        // Insert the config panel before the chart
+        chartSvg.parentNode.insertBefore(configPanel, chartSvg);
 
         return chartHolder;
     }

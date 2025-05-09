@@ -446,104 +446,18 @@ function () {
 
       var chartHolder = _waterfall["default"].setupTimeLine(self.startTime, chartData.loadDuration, chartData.blocks, _data["default"].marks, chartData.bg, "Resource Timing");
 
-      var chartSvg = chartHolder.getElementsByClassName("water-fall-chart")[0]; // Add exclude pattern editor
+      var chartSvg = chartHolder.getElementsByClassName("water-fall-chart")[0]; // Create configuration panel
 
-      var excludeDomainPatternEditor = _dom["default"].newTag("textarea", {
-        "class": "exclude-pattern-editor",
-        placeholder: "Exclude pattern",
-        value: self.excludeDomainPattern,
-        onblur: function onblur(e) {
-          var time = e.target.value;
-          self.excludeDomainPattern = e.target.value.trim() || "";
-          self.refreshSVG(chartHolder);
-        }
-      });
+      var configPanel = _dom["default"].newTag("div", {
+        "class": "config-panel",
+        style: "margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 4px; display: flex; justify-content: flex-end; gap: 10px; align-items: center;"
+      }); // Domain selector
 
-      chartSvg.parentNode.insertBefore(excludeDomainPatternEditor, chartSvg); // Add exclude pattern editor
-
-      var includeDomainPatternEditor = _dom["default"].newTag("textarea", {
-        "class": "include-pattern-editor",
-        placeholder: "Include pattern",
-        value: self.includeDomainPattern,
-        onblur: function onblur(e) {
-          var time = e.target.value;
-          self.includeDomainPattern = e.target.value.trim() || "";
-          self.refreshSVG(chartHolder);
-        }
-      });
-
-      chartSvg.parentNode.insertBefore(includeDomainPatternEditor, chartSvg); // Add mark from selector
-
-      var handleMarkFromInput = function handleMarkFromInput(e) {
-        var time = e.target.value;
-        self.markFrom = time ? parseInt(time) : null;
-        self.refreshSVG(chartHolder);
-      };
-
-      var markFromSelector = _dom["default"].newTag("input", {
-        "class": "mark-from-selector",
-        type: "text",
-        placeholder: "Mark From (seconds)",
-        value: self.markFrom || "",
-        onblur: handleMarkFromInput,
-        onkeydown: function onkeydown(e) {
-          if (e.key === 'Enter') {
-            handleMarkFromInput(e);
-          }
-        }
-      });
-
-      chartSvg.parentNode.insertBefore(markFromSelector, chartSvg); // Add end time selector
-
-      var handleTimeInput = function handleTimeInput(e, isStartTime) {
-        var time = e.target.value;
-
-        if (isStartTime) {
-          self.startTime = time ? parseInt(time) : 0;
-        } else {
-          self.endTime = time ? parseInt(time) : null;
-        }
-
-        self.refreshSVG(chartHolder);
-      };
-
-      var endTimeSelector = _dom["default"].newTag("input", {
-        "class": "end-time-selector",
-        type: "text",
-        placeholder: "To (seconds)",
-        value: self.endTime || "",
-        onblur: function onblur(e) {
-          return handleTimeInput(e, false);
-        },
-        onkeydown: function onkeydown(e) {
-          if (e.key === 'Enter') {
-            handleTimeInput(e, false);
-          }
-        }
-      });
-
-      chartSvg.parentNode.insertBefore(endTimeSelector, chartSvg); // Add start time selector
-
-      var startTimeSelector = _dom["default"].newTag("input", {
-        "class": "start-time-selector",
-        type: "text",
-        placeholder: "From (seconds)",
-        value: self.startTime || "0",
-        onblur: function onblur(e) {
-          return handleTimeInput(e, true);
-        },
-        onkeydown: function onkeydown(e) {
-          if (e.key === 'Enter') {
-            handleTimeInput(e, true);
-          }
-        }
-      });
-
-      chartSvg.parentNode.insertBefore(startTimeSelector, chartSvg); // Domain selector
 
       if (_data["default"].requestsByDomain.length > 1) {
         var selectBox = _dom["default"].newTag("select", {
           "class": "domain-selector",
+          style: "width: 150px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;",
           onchange: function onchange(e) {
             self.domain = e.target.options[e.target.selectedIndex].value;
             self.refreshSVG(chartHolder);
@@ -551,7 +465,7 @@ function () {
         });
 
         selectBox.appendChild(_dom["default"].newTag("option", {
-          text: "show all",
+          text: "Show all",
           value: "all",
           selected: self.domain === "all"
         }));
@@ -563,9 +477,107 @@ function () {
           }));
         });
 
-        chartSvg.parentNode.insertBefore(selectBox, chartSvg);
-      }
+        configPanel.appendChild(selectBox);
+      } // Add start time selector
 
+
+      var startTimeSelector = _dom["default"].newTag("input", {
+        "class": "start-time-selector",
+        type: "text",
+        placeholder: "From (seconds)",
+        value: self.startTime || "0",
+        style: "width: 100px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;",
+        onblur: function onblur(e) {
+          var time = e.target.value;
+          self.startTime = time ? parseInt(time) : 0;
+          self.refreshSVG(chartHolder);
+        },
+        onkeydown: function onkeydown(e) {
+          if (e.key === 'Enter') {
+            e.target.blur();
+          }
+        }
+      });
+
+      configPanel.appendChild(startTimeSelector); // Add end time selector
+
+      var endTimeSelector = _dom["default"].newTag("input", {
+        "class": "end-time-selector",
+        type: "text",
+        placeholder: "To (seconds)",
+        value: self.endTime || "",
+        style: "width: 100px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;",
+        onblur: function onblur(e) {
+          var time = e.target.value;
+          self.endTime = time ? parseInt(time) : null;
+          self.refreshSVG(chartHolder);
+        },
+        onkeydown: function onkeydown(e) {
+          if (e.key === 'Enter') {
+            e.target.blur();
+          }
+        }
+      });
+
+      configPanel.appendChild(endTimeSelector); // Add mark from selector
+
+      var markFromSelector = _dom["default"].newTag("input", {
+        "class": "mark-from-selector",
+        type: "text",
+        placeholder: "Mark From (seconds)",
+        value: self.markFrom || "",
+        style: "width: 120px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;",
+        onblur: function onblur(e) {
+          var time = e.target.value;
+          self.markFrom = time ? parseInt(time) : null;
+          self.refreshSVG(chartHolder);
+        },
+        onkeydown: function onkeydown(e) {
+          if (e.key === 'Enter') {
+            e.target.blur();
+          }
+        }
+      });
+
+      configPanel.appendChild(markFromSelector); // Add include pattern editor
+
+      var includeDomainPatternEditor = _dom["default"].newTag("textarea", {
+        "class": "include-pattern-editor",
+        placeholder: "Include pattern",
+        value: self.includeDomainPattern,
+        style: "width: 150px; min-height: 20px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; resize: none; overflow: hidden;",
+        oninput: function oninput(e) {
+          e.target.style.height = 'auto';
+          e.target.style.height = e.target.scrollHeight + 'px';
+        },
+        onblur: function onblur(e) {
+          self.includeDomainPattern = e.target.value.trim() || "";
+          self.refreshSVG(chartHolder);
+        }
+      });
+
+      includeDomainPatternEditor.textContent = self.includeDomainPattern;
+      configPanel.appendChild(includeDomainPatternEditor); // Add exclude pattern editor
+
+      var excludeDomainPatternEditor = _dom["default"].newTag("textarea", {
+        "class": "exclude-pattern-editor",
+        placeholder: "Exclude pattern",
+        value: self.excludeDomainPattern,
+        style: "width: 150px; min-height: 20px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; resize: none; overflow: hidden;",
+        oninput: function oninput(e) {
+          e.target.style.height = 'auto';
+          e.target.style.height = e.target.scrollHeight + 'px';
+        },
+        onblur: function onblur(e) {
+          self.excludeDomainPattern = e.target.value.trim() || "";
+          self.refreshSVG(chartHolder);
+        }
+      });
+
+      excludeDomainPatternEditor.textContent = self.excludeDomainPattern;
+      configPanel.appendChild(excludeDomainPatternEditor); // Insert the config panel before the chart
+
+      chartSvg.parentNode.insertBefore(configPanel, chartSvg);
       return chartHolder;
     }
   }]);
@@ -1428,7 +1440,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.style = void 0;
-var style = "body {overflow: auto; background: #fff; font:normal 12px/18px sans-serif; color:#333;} * {box-sizing:border-box;} svg {font:normal 12px/18px sans-serif;} th {text-align: left;} button {cursor:pointer;} button:disabled {cursor:default;} #perfbook-holder {overflow: hidden; width:100%; padding:1em 2em;} #perfbook-content {position:relative;} .perfbook-close {position:absolute; top:0; right:0; padding:1em; z-index:1; background:transparent; border:0; cursor:pointer;} .full-width {width:100%;} .chart-holder {margin: 5em 0;} h1 {font:bold 18px/18px sans-serif; margin:1em 0; color:#666;} .text-right {text-align: right;} .text-left {text-align: left;} .css {background: #afd899;} .iframe, .html, .internal {background: #85b3f2;} .img, .image {background: #bc9dd6;} .script, .js {background: #e7bd8c;} .link {background: #89afe6;} .swf, .flash {background: #4db3ba;} .font {background: #e96859;} .xmlhttprequest, .ajax {background: #e7d98c;} .other {background: #bebebe;} .css-light {background: #b9cfa0;} .iframe-light, .html-light, .internal-light {background: #c2d9f9;} .img-light, .image-light {background: #deceeb;} .script-light, .js-light {background: #f3dec6;} .link-light {background: #c4d7f3;} .swf-light, .flash-light {background: #a6d9dd;} .font-light {background: #f4b4ac;} .xmlhttprequest-light, .ajax-light {background: #f3ecc6;} .other-light {background: #dfdfdf;} .block-css {fill: #afd899;} .block-iframe, .block-html, .block-internal {fill: #85b3f2;} .block-img, .block-image {fill: #bc9dd6;} .block-script, .block-js {fill: #e7bd8c;} .block-link {fill: #89afe6;} .block-swf, .block-flash {fill: #4db3ba;} .block-font {fill: #e96859;} .block-xmlhttprequest, .block-ajax {fill: #e7d98c;} .block-other {fill: #bebebe;} .block-total {fill: #ccc;} .block-unload {fill: #909;} .block-redirect {fill: #ffff60;} .block-appcache {fill: #1f831f;} .block-dns {fill: #1f7c83;} .block-tcp {fill: #e58226;} .block-ttfb {fill: #1fe11f;} .block-response {fill: #1977dd;} .block-dom {fill: #9cc;} .block-dom-content-loaded {fill: #d888df;} .block-onload {fill: #c0c0ff;} .block-ssl {fill: #c141cd; } .block-ms-first-paint-event {fill: #8fbc83; } .block-dom-interactive-event {fill: #d888df; } .block-network-server {fill: #8cd18c; } .block-custom-measure {fill: #f00; } .block-navigation-api-total {fill: #ccc;} .block-blocking {fill: #cdcdcd;} .block-undefined {fill: #0f0;} .tiles-holder {margin: 2em -18px 2em 0; display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex; display: flex; -webkit-flex-flow: row wrap; flex-flow: row wrap; } .summary-tile { flex-grow: 1; width:250px; background:#ddd; padding: 1em; margin:0 18px 1em 0; color:#666; text-align:center;} .summary-tile dt {font-weight:bold; font-size:16px; display:block; line-height:1.2em; min-height:2.9em; padding:0 0 0.5em;} .summary-tile dd {font-weight:bold; line-height:60px; margin:0;} .summary-tile-appendix {float:left; clear:both; width:100%; font-size:10px; line-height:1.1em; color:#666;} .summary-tile-appendix dt {float:left; clear:both;} .summary-tile-appendix dd {float:left; margin:0 0 0 1em;} .pie-charts-holder {margin-right: -72px; display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex; display: flex; -webkit-flex-flow: row wrap; flex-flow: row wrap;} .pie-chart-holder {flex-grow: 1; width:350px; max-width: 600px; margin: 0 72px 0 0;} .pie-chart-holder h1 {min-height:2em;} .pie-chart {width:100%;} .table-holder {overflow-x:auto} .table-holder table {float:left; width:100%; font-size:12px; line-height:18px;} .table-holder th, .table-holder td {line-height: 1em; margin:0; padding:0.25em 0.5em 0.25em 0;} #pie-request-by-domain {flex-grow: 2; width:772px; max-width: 1272px;} #filetypes-and-intiators-table {margin: 2em 0 5em;} #filetypes-and-intiators-table table {vertical-align: middle; border-collapse: collapse;} #filetypes-and-intiators-table td {padding:0.5em; border-right: solid 1px #fff;} #filetypes-and-intiators-table td:last-child {padding-right: 0; border-right:0;} #filetypes-and-intiators-table .file-type-row td {border-top: solid 10px #fff;} #filetypes-and-intiators-table .file-type-row:first-child td {border-top: none;} .water-fall-holder {fill:#ccc;} .water-fall-chart {width:100%; background:#f0f5f0;} .water-fall-chart .marker-holder {width:100%;} .water-fall-chart .line-holder {stroke-width:1; stroke: #ccc; stroke-opacity:0.5;} .water-fall-chart .line-holder.active {stroke: #69009e; stroke-width:2; stroke-opacity:1;} .water-fall-chart .labels {width:100%;} .water-fall-chart .labels .inner-label {pointer-events: none;} .water-fall-chart .time-block.active {opacity: 0.8;} .water-fall-chart .line-end, .water-fall-chart .line-start {display: none; stroke-width:1; stroke-opacity:0.5; stroke: #000;} .water-fall-chart .line-end.active, .water-fall-chart .line-start.active {display: block;} .water-fall-chart .mark-holder text {-webkit-writing-mode: tb; writing-mode:vertical-lr; writing-mode: tb;} .time-scale line {stroke:#0cc; stroke-width:1;} .time-scale text {font-weight:bold;} .domain-selector, .start-time-selector, .end-time-selector, .exclude-pattern-editor, .include-pattern-editor, .mark-from-selector { float:right; } .exclude-pattern-editor, .include-pattern-editor { width: 150px; word-break: break-all; } .navigation-timing-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; } .navigation-timing-content.expanded { max-height: 2000px; transition: max-height 0.5s ease-in; } .legends-group { display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex; display: flex; -webkit-flex-flow: row wrap; flex-flow: row wrap; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; } .legends-group.expanded { max-height: 2000px; transition: max-height 0.5s ease-in; } .legends-group .legend-holder { flex-grow: 1; width:250px; padding:0 1em 1em; } .legends-group .legend-holder h4 { margin: 0; padding: 0; } .legend-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 1em; } .legend-header h3 { margin: 0; padding: 0; } .legend-toggle { background: none; border: none; padding: 0; font-size: 14px; color: #666; cursor: pointer; margin-left: 1em; transition: transform 0.3s ease; } .legend-toggle:hover { color: #333; } .legend-toggle.rotated { transform: rotate(180deg); } .legend dt {float: left; clear: left; padding: 0 0 0.5em;} .legend dd {float: left; display: inline-block; margin: 0 1em; line-height: 1em;} .legend .colorBoxHolder span {display: inline-block; width: 15px; height: 1em;} .page-metric {} .page-metric button {margin-left: 2em;}";
+var style = "body {overflow: auto; background: #fff; font:normal 12px/18px sans-serif; color:#333;} * {box-sizing:border-box;} svg {font:normal 12px/18px sans-serif;} th {text-align: left;} button {cursor:pointer;} button:disabled {cursor:default;} #perfbook-holder {overflow: hidden; width:100%; padding:1em 2em;} #perfbook-content {position:relative;} .perfbook-close {position:absolute; top:0; right:0; padding:1em; z-index:1; background:transparent; border:0; cursor:pointer;} .full-width {width:100%;} .chart-holder {margin: 5em 0;} h1 {font:bold 18px/18px sans-serif; margin:1em 0; color:#666;} .text-right {text-align: right;} .text-left {text-align: left;} .css {background: #afd899;} .iframe, .html, .internal {background: #85b3f2;} .img, .image {background: #bc9dd6;} .script, .js {background: #e7bd8c;} .link {background: #89afe6;} .swf, .flash {background: #4db3ba;} .font {background: #e96859;} .xmlhttprequest, .ajax {background: #e7d98c;} .other {background: #bebebe;} .css-light {background: #b9cfa0;} .iframe-light, .html-light, .internal-light {background: #c2d9f9;} .img-light, .image-light {background: #deceeb;} .script-light, .js-light {background: #f3dec6;} .link-light {background: #c4d7f3;} .swf-light, .flash-light {background: #a6d9dd;} .font-light {background: #f4b4ac;} .xmlhttprequest-light, .ajax-light {background: #f3ecc6;} .other-light {background: #dfdfdf;} .block-css {fill: #afd899;} .block-iframe, .block-html, .block-internal {fill: #85b3f2;} .block-img, .block-image {fill: #bc9dd6;} .block-script, .block-js {fill: #e7bd8c;} .block-link {fill: #89afe6;} .block-swf, .block-flash {fill: #4db3ba;} .block-font {fill: #e96859;} .block-xmlhttprequest, .block-ajax {fill: #e7d98c;} .block-other {fill: #bebebe;} .block-total {fill: #ccc;} .block-unload {fill: #909;} .block-redirect {fill: #ffff60;} .block-appcache {fill: #1f831f;} .block-dns {fill: #1f7c83;} .block-tcp {fill: #e58226;} .block-ttfb {fill: #1fe11f;} .block-response {fill: #1977dd;} .block-dom {fill: #9cc;} .block-dom-content-loaded {fill: #d888df;} .block-onload {fill: #c0c0ff;} .block-ssl {fill: #c141cd; } .block-ms-first-paint-event {fill: #8fbc83; } .block-dom-interactive-event {fill: #d888df; } .block-network-server {fill: #8cd18c; } .block-custom-measure {fill: #f00; } .block-navigation-api-total {fill: #ccc;} .block-blocking {fill: #cdcdcd;} .block-undefined {fill: #0f0;} .tiles-holder {margin: 2em -18px 2em 0; display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex; display: flex; -webkit-flex-flow: row wrap; flex-flow: row wrap; } .summary-tile { flex-grow: 1; width:250px; background:#ddd; padding: 1em; margin:0 18px 1em 0; color:#666; text-align:center;} .summary-tile dt {font-weight:bold; font-size:16px; display:block; line-height:1.2em; min-height:2.9em; padding:0 0 0.5em;} .summary-tile dd {font-weight:bold; line-height:60px; margin:0;} .summary-tile-appendix {float:left; clear:both; width:100%; font-size:10px; line-height:1.1em; color:#666;} .summary-tile-appendix dt {float:left; clear:both;} .summary-tile-appendix dd {float:left; margin:0 0 0 1em;} .pie-charts-holder {margin-right: -72px; display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex; display: flex; -webkit-flex-flow: row wrap; flex-flow: row wrap;} .pie-chart-holder {flex-grow: 1; width:350px; max-width: 600px; margin: 0 72px 0 0;} .pie-chart-holder h1 {min-height:2em;} .pie-chart {width:100%;} .table-holder {overflow-x:auto} .table-holder table {float:left; width:100%; font-size:12px; line-height:18px;} .table-holder th, .table-holder td {line-height: 1em; margin:0; padding:0.25em 0.5em 0.25em 0;} #pie-request-by-domain {flex-grow: 2; width:772px; max-width: 1272px;} #filetypes-and-intiators-table {margin: 2em 0 5em;} #filetypes-and-intiators-table table {vertical-align: middle; border-collapse: collapse;} #filetypes-and-intiators-table td {padding:0.5em; border-right: solid 1px #fff;} #filetypes-and-intiators-table td:last-child {padding-right: 0; border-right:0;} #filetypes-and-intiators-table .file-type-row td {border-top: solid 10px #fff;} #filetypes-and-intiators-table .file-type-row:first-child td {border-top: none;} .water-fall-holder {fill:#ccc;} .water-fall-chart {width:100%; background:#f0f5f0;} .water-fall-chart .marker-holder {width:100%;} .water-fall-chart .line-holder {stroke-width:1; stroke: #ccc; stroke-opacity:0.5;} .water-fall-chart .line-holder.active {stroke: #69009e; stroke-width:2; stroke-opacity:1;} .water-fall-chart .labels {width:100%;} .water-fall-chart .labels .inner-label {pointer-events: none;} .water-fall-chart .time-block.active {opacity: 0.8;} .water-fall-chart .line-end, .water-fall-chart .line-start {display: none; stroke-width:1; stroke-opacity:0.5; stroke: #000;} .water-fall-chart .line-end.active, .water-fall-chart .line-start.active {display: block;} .water-fall-chart .mark-holder text {-webkit-writing-mode: tb; writing-mode:vertical-lr; writing-mode: tb;} .time-scale line {stroke:#0cc; stroke-width:1;} .time-scale text {font-weight:bold;} .domain-selector, .start-time-selector, .end-time-selector, .exclude-pattern-editor, .include-pattern-editor, .mark-from-selector { } .exclude-pattern-editor, .include-pattern-editor { width: 150px; word-break: break-all; } .navigation-timing-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; } .navigation-timing-content.expanded { max-height: 2000px; transition: max-height 0.5s ease-in; } .legends-group { display: -webkit-box; display: -moz-box; display: -ms-flexbox; display: -webkit-flex; display: flex; -webkit-flex-flow: row wrap; flex-flow: row wrap; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; } .legends-group.expanded { max-height: 2000px; transition: max-height 0.5s ease-in; } .legends-group .legend-holder { flex-grow: 1; width:250px; padding:0 1em 1em; } .legends-group .legend-holder h4 { margin: 0; padding: 0; } .legend-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin-bottom: 1em; } .legend-header h3 { margin: 0; padding: 0; } .legend-toggle { background: none; border: none; padding: 0; font-size: 14px; color: #666; cursor: pointer; margin-left: 1em; transition: transform 0.3s ease; } .legend-toggle:hover { color: #333; } .legend-toggle.rotated { transform: rotate(180deg); } .legend dt {float: left; clear: left; padding: 0 0 0.5em;} .legend dd {float: left; display: inline-block; margin: 0 1em; line-height: 1em;} .legend .colorBoxHolder span {display: inline-block; width: 15px; height: 1em;} .page-metric {} .page-metric button {margin-left: 2em;}";
 exports.style = style;
 
 
