@@ -1,5 +1,5 @@
 /* https://github.com/dengzhizhi/performance-bookmarklet/tree/enhanced-resource-timeline by Zhizhi Deng
-   build:23/04/2025 */
+   build:09/05/2025 */
 
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
@@ -1122,6 +1122,12 @@ var _default = {
       existingCloseBtn.parentNode.removeChild(existingCloseBtn);
     }
 
+    var existingBackToTopBtn = document.getElementById("perfbook-back-to-top");
+
+    if (existingBackToTopBtn) {
+      existingBackToTopBtn.parentNode.removeChild(existingBackToTopBtn);
+    }
+
     iFrameEl = document.getElementById("perfbook-iframe");
 
     var finalize = function finalize() {
@@ -1168,8 +1174,25 @@ var _default = {
       externalCloseBtn.addEventListener("click", function () {
         iFrameEl.parentNode.removeChild(iFrameEl);
         externalCloseBtn.parentNode.removeChild(externalCloseBtn);
+        backToTopBtn.parentNode.removeChild(backToTopBtn);
       });
-      document.body.appendChild(externalCloseBtn);
+      document.body.appendChild(externalCloseBtn); // Create back to top button
+
+      var backToTopBtn = _dom["default"].newTag("button", {
+        id: "perfbook-back-to-top",
+        text: "back to top"
+      });
+
+      backToTopBtn.style.cssText = "position:fixed; top:1em; right:7em; padding:0.5em 1em; z-index:6543212; background:rgba(255,255,255,0.9); border:1px solid #ccc; border-radius:4px; cursor:pointer; font-size:14px; color:#333; box-shadow:0 2px 4px rgba(0,0,0,0.1);";
+      backToTopBtn.addEventListener("click", function () {
+        if (iFrameEl) {
+          iFrameEl.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+      document.body.appendChild(backToTopBtn);
     }
   },
   getOutputIFrame: getOutputIFrame

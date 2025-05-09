@@ -85,6 +85,10 @@ export default  {
 		if (existingCloseBtn) {
 			existingCloseBtn.parentNode.removeChild(existingCloseBtn);
 		}
+		const existingBackToTopBtn = document.getElementById("perfbook-back-to-top");
+		if (existingBackToTopBtn) {
+			existingBackToTopBtn.parentNode.removeChild(existingBackToTopBtn);
+		}
 
 		iFrameEl = document.getElementById("perfbook-iframe");
 
@@ -135,8 +139,22 @@ export default  {
 			externalCloseBtn.addEventListener("click", () => {
 				iFrameEl.parentNode.removeChild(iFrameEl);
 				externalCloseBtn.parentNode.removeChild(externalCloseBtn);
+				backToTopBtn.parentNode.removeChild(backToTopBtn);
 			});
 			document.body.appendChild(externalCloseBtn);
+
+			// Create back to top button
+			const backToTopBtn = dom.newTag("button", {
+				id: "perfbook-back-to-top",
+				text: "back to top"
+			});
+			backToTopBtn.style.cssText = "position:fixed; top:1em; right:7em; padding:0.5em 1em; z-index:6543212; background:rgba(255,255,255,0.9); border:1px solid #ccc; border-radius:4px; cursor:pointer; font-size:14px; color:#333; box-shadow:0 2px 4px rgba(0,0,0,0.1);";
+			backToTopBtn.addEventListener("click", () => {
+				if (iFrameEl) {
+					iFrameEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				}
+			});
+			document.body.appendChild(backToTopBtn);
 		}
 	},
 	getOutputIFrame: getOutputIFrame
