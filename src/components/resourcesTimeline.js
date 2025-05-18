@@ -14,6 +14,8 @@ class ResourceTimelineComponent {
         this.markFrom = options.markFrom || null;
         this.excludeDomainPattern = options.excludeDomainPattern || "";
         this.includeDomainPattern = options.includeDomainPattern || "";
+        this.excludeMarkPattern = options.excludeMarkPattern || "";
+        this.includeMarkPattern = options.includeMarkPattern || "";
         this.maxTime = (options.maxTime || (5 * 60)) * 1000; // default to 5 minutes, timeline could be messy, use time filters to zoom in
     }
 
@@ -133,6 +135,12 @@ class ResourceTimelineComponent {
         const excludeRegex = (self.excludeDomainPattern && self.excludeDomainPattern.trim() !== "")
             ? new RegExp(self.excludeDomainPattern)
             : null;
+        const includeMarkRegex = (self.includeMarkPattern && self.includeMarkPattern.trim() !== "")
+            ? new RegExp(self.includeMarkPattern)
+            : null;
+        const excludeMarkRegex = (self.excludeMarkPattern && self.excludeMarkPattern.trim() !== "")
+            ? new RegExp(self.excludeMarkPattern)
+            : null;
         // Resource filter
         const chartData = self.getChartData((resource) =>
             (self.domain === "all" || resource.domain === self.domain) &&
@@ -150,7 +158,9 @@ class ResourceTimelineComponent {
             data.marks.filter((it) =>
                 it.startTime >= startTimeInMs &&
                 it.startTime <= endTimeInMs &&
-                (!self.markFrom || it.startTime >= self.markFrom * 1000)
+                (!self.markFrom || it.startTime >= self.markFrom * 1000) &&
+                (!includeMarkRegex || includeMarkRegex.exec(it.name)) &&
+                (!excludeMarkRegex || !excludeMarkRegex.exec(it.name))
             ),
             chartData.bg,
             "Temp",
@@ -294,6 +304,42 @@ class ResourceTimelineComponent {
         });
         excludeDomainPatternEditor.textContent = self.excludeDomainPattern;
         configPanel.appendChild(excludeDomainPatternEditor);
+
+        // Add mark include pattern editor
+        const includeMarkPatternEditor = dom.newTag("textarea", {
+            class: "include-mark-pattern-editor",
+            placeholder: "Include mark pattern",
+            value: self.includeMarkPattern,
+            style: "width: 150px; min-height: 20px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; resize: none; overflow: hidden;",
+            oninput: (e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = (e.target.scrollHeight) + 'px';
+            },
+            onblur: (e) => {
+                self.includeMarkPattern = e.target.value.trim() || "";
+                self.refreshSVG(chartHolder);
+            }
+        });
+        includeMarkPatternEditor.textContent = self.includeMarkPattern;
+        configPanel.appendChild(includeMarkPatternEditor);
+
+        // Add mark exclude pattern editor
+        const excludeMarkPatternEditor = dom.newTag("textarea", {
+            class: "exclude-mark-pattern-editor",
+            placeholder: "Exclude mark pattern",
+            value: self.excludeMarkPattern,
+            style: "width: 150px; min-height: 20px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; resize: none; overflow: hidden;",
+            oninput: (e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = (e.target.scrollHeight) + 'px';
+            },
+            onblur: (e) => {
+                self.excludeMarkPattern = e.target.value.trim() || "";
+                self.refreshSVG(chartHolder);
+            }
+        });
+        excludeMarkPatternEditor.textContent = self.excludeMarkPattern;
+        configPanel.appendChild(excludeMarkPatternEditor);
 
         // Insert the config panel before the chart
         chartSvg.parentNode.insertBefore(configPanel, chartSvg);

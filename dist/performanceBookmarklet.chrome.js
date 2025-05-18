@@ -1,5 +1,5 @@
 /* https://github.com/dengzhizhi/performance-bookmarklet/tree/enhanced-resource-timeline by Zhizhi Deng
-   build:09/05/2025 */
+   build:18/05/2025 */
 
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
@@ -265,6 +265,8 @@ function () {
     this.markFrom = options.markFrom || null;
     this.excludeDomainPattern = options.excludeDomainPattern || "";
     this.includeDomainPattern = options.includeDomainPattern || "";
+    this.excludeMarkPattern = options.excludeMarkPattern || "";
+    this.includeMarkPattern = options.includeMarkPattern || "";
     this.maxTime = (options.maxTime || 5 * 60) * 1000; // default to 5 minutes, timeline could be messy, use time filters to zoom in
   }
   /**
@@ -361,7 +363,9 @@ function () {
       var startTimeInMs = self.startTime * 1000;
       var endTimeLimitInMs = self.endTime ? self.endTime * 1000 : null;
       var includeRegex = self.includeDomainPattern && self.includeDomainPattern.trim() !== "" ? new RegExp(self.includeDomainPattern) : null;
-      var excludeRegex = self.excludeDomainPattern && self.excludeDomainPattern.trim() !== "" ? new RegExp(self.excludeDomainPattern) : null; // Resource filter
+      var excludeRegex = self.excludeDomainPattern && self.excludeDomainPattern.trim() !== "" ? new RegExp(self.excludeDomainPattern) : null;
+      var includeMarkRegex = self.includeMarkPattern && self.includeMarkPattern.trim() !== "" ? new RegExp(self.includeMarkPattern) : null;
+      var excludeMarkRegex = self.excludeMarkPattern && self.excludeMarkPattern.trim() !== "" ? new RegExp(self.excludeMarkPattern) : null; // Resource filter
 
       var chartData = self.getChartData(function (resource) {
         return (self.domain === "all" || resource.domain === self.domain) && resource.startTime >= startTimeInMs && (!endTimeLimitInMs || resource.startTime <= endTimeLimitInMs) && (!includeRegex || includeRegex.exec(resource.name)) && (!excludeRegex || !excludeRegex.exec(resource.name));
@@ -370,7 +374,7 @@ function () {
 
       var tempChartHolder = _waterfall["default"].setupTimeLine(self.startTime, chartData.loadDuration, chartData.blocks, // Mark filter
       _data["default"].marks.filter(function (it) {
-        return it.startTime >= startTimeInMs && it.startTime <= endTimeInMs && (!self.markFrom || it.startTime >= self.markFrom * 1000);
+        return it.startTime >= startTimeInMs && it.startTime <= endTimeInMs && (!self.markFrom || it.startTime >= self.markFrom * 1000) && (!includeMarkRegex || includeMarkRegex.exec(it.name)) && (!excludeMarkRegex || !excludeMarkRegex.exec(it.name));
       }), chartData.bg, "Temp");
 
       var oldSVG = chartHolder.getElementsByClassName("water-fall-chart")[0];
@@ -514,7 +518,43 @@ function () {
       });
 
       excludeDomainPatternEditor.textContent = self.excludeDomainPattern;
-      configPanel.appendChild(excludeDomainPatternEditor); // Insert the config panel before the chart
+      configPanel.appendChild(excludeDomainPatternEditor); // Add mark include pattern editor
+
+      var includeMarkPatternEditor = _dom["default"].newTag("textarea", {
+        "class": "include-mark-pattern-editor",
+        placeholder: "Include mark pattern",
+        value: self.includeMarkPattern,
+        style: "width: 150px; min-height: 20px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; resize: none; overflow: hidden;",
+        oninput: function oninput(e) {
+          e.target.style.height = 'auto';
+          e.target.style.height = e.target.scrollHeight + 'px';
+        },
+        onblur: function onblur(e) {
+          self.includeMarkPattern = e.target.value.trim() || "";
+          self.refreshSVG(chartHolder);
+        }
+      });
+
+      includeMarkPatternEditor.textContent = self.includeMarkPattern;
+      configPanel.appendChild(includeMarkPatternEditor); // Add mark exclude pattern editor
+
+      var excludeMarkPatternEditor = _dom["default"].newTag("textarea", {
+        "class": "exclude-mark-pattern-editor",
+        placeholder: "Exclude mark pattern",
+        value: self.excludeMarkPattern,
+        style: "width: 150px; min-height: 20px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; resize: none; overflow: hidden;",
+        oninput: function oninput(e) {
+          e.target.style.height = 'auto';
+          e.target.style.height = e.target.scrollHeight + 'px';
+        },
+        onblur: function onblur(e) {
+          self.excludeMarkPattern = e.target.value.trim() || "";
+          self.refreshSVG(chartHolder);
+        }
+      });
+
+      excludeMarkPatternEditor.textContent = self.excludeMarkPattern;
+      configPanel.appendChild(excludeMarkPatternEditor); // Insert the config panel before the chart
 
       chartSvg.parentNode.insertBefore(configPanel, chartSvg);
       return chartHolder;
