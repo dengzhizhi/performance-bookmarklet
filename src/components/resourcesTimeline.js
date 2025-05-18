@@ -130,16 +130,16 @@ class ResourceTimelineComponent {
         const startTimeInMs = self.startTime * 1000;
         const endTimeLimitInMs = self.endTime ? self.endTime * 1000 : null;
         const includeRegex = (self.includeDomainPattern && self.includeDomainPattern.trim() !== "")
-            ? new RegExp(self.includeDomainPattern)
+            ? new RegExp(self.includeDomainPattern, 'i')
             : null;
         const excludeRegex = (self.excludeDomainPattern && self.excludeDomainPattern.trim() !== "")
-            ? new RegExp(self.excludeDomainPattern)
+            ? new RegExp(self.excludeDomainPattern, 'i')
             : null;
         const includeMarkRegex = (self.includeMarkPattern && self.includeMarkPattern.trim() !== "")
-            ? new RegExp(self.includeMarkPattern)
+            ? new RegExp(self.includeMarkPattern, 'i')
             : null;
         const excludeMarkRegex = (self.excludeMarkPattern && self.excludeMarkPattern.trim() !== "")
-            ? new RegExp(self.excludeMarkPattern)
+            ? new RegExp(self.excludeMarkPattern, 'i')
             : null;
         // Resource filter
         const chartData = self.getChartData((resource) =>
@@ -179,7 +179,12 @@ class ResourceTimelineComponent {
         // Create configuration panel
         const configPanel = dom.newTag("div", {
             class: "config-panel",
-            style: "margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 4px; display: flex; justify-content: flex-end; gap: 10px; align-items: center;"
+            style: "margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 4px; display: flex; flex-direction: column; gap: 10px;"
+        });
+
+        // Create top row for basic controls
+        const topRow = dom.newTag("div", {
+            style: "display: flex; justify-content: flex-end; gap: 10px; align-items: center;"
         });
 
         // Domain selector
@@ -206,7 +211,7 @@ class ResourceTimelineComponent {
                 }));
             });
 
-            configPanel.appendChild(selectBox);
+            topRow.appendChild(selectBox);
         }
 
         // Add start time selector
@@ -227,7 +232,7 @@ class ResourceTimelineComponent {
                 }
             }
         });
-        configPanel.appendChild(startTimeSelector);
+        topRow.appendChild(startTimeSelector);
 
         // Add end time selector
         const endTimeSelector = dom.newTag("input", {
@@ -247,7 +252,7 @@ class ResourceTimelineComponent {
                 }
             }
         });
-        configPanel.appendChild(endTimeSelector);
+        topRow.appendChild(endTimeSelector);
 
         // Add mark from selector
         const markFromSelector = dom.newTag("input", {
@@ -267,7 +272,14 @@ class ResourceTimelineComponent {
                 }
             }
         });
-        configPanel.appendChild(markFromSelector);
+        topRow.appendChild(markFromSelector);
+
+        configPanel.appendChild(topRow);
+
+        // Create pattern editors row
+        const patternRow = dom.newTag("div", {
+            style: "display: flex; justify-content: flex-end; gap: 10px; align-items: center;"
+        });
 
         // Add include pattern editor
         const includeDomainPatternEditor = dom.newTag("textarea", {
@@ -285,7 +297,7 @@ class ResourceTimelineComponent {
             }
         });
         includeDomainPatternEditor.textContent = self.includeDomainPattern;
-        configPanel.appendChild(includeDomainPatternEditor);
+        patternRow.appendChild(includeDomainPatternEditor);
 
         // Add exclude pattern editor
         const excludeDomainPatternEditor = dom.newTag("textarea", {
@@ -303,7 +315,7 @@ class ResourceTimelineComponent {
             }
         });
         excludeDomainPatternEditor.textContent = self.excludeDomainPattern;
-        configPanel.appendChild(excludeDomainPatternEditor);
+        patternRow.appendChild(excludeDomainPatternEditor);
 
         // Add mark include pattern editor
         const includeMarkPatternEditor = dom.newTag("textarea", {
@@ -321,7 +333,7 @@ class ResourceTimelineComponent {
             }
         });
         includeMarkPatternEditor.textContent = self.includeMarkPattern;
-        configPanel.appendChild(includeMarkPatternEditor);
+        patternRow.appendChild(includeMarkPatternEditor);
 
         // Add mark exclude pattern editor
         const excludeMarkPatternEditor = dom.newTag("textarea", {
@@ -339,7 +351,9 @@ class ResourceTimelineComponent {
             }
         });
         excludeMarkPatternEditor.textContent = self.excludeMarkPattern;
-        configPanel.appendChild(excludeMarkPatternEditor);
+        patternRow.appendChild(excludeMarkPatternEditor);
+
+        configPanel.appendChild(patternRow);
 
         // Insert the config panel before the chart
         chartSvg.parentNode.insertBefore(configPanel, chartSvg);

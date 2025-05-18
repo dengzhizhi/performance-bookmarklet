@@ -362,10 +362,10 @@ function () {
       var self = this;
       var startTimeInMs = self.startTime * 1000;
       var endTimeLimitInMs = self.endTime ? self.endTime * 1000 : null;
-      var includeRegex = self.includeDomainPattern && self.includeDomainPattern.trim() !== "" ? new RegExp(self.includeDomainPattern) : null;
-      var excludeRegex = self.excludeDomainPattern && self.excludeDomainPattern.trim() !== "" ? new RegExp(self.excludeDomainPattern) : null;
-      var includeMarkRegex = self.includeMarkPattern && self.includeMarkPattern.trim() !== "" ? new RegExp(self.includeMarkPattern) : null;
-      var excludeMarkRegex = self.excludeMarkPattern && self.excludeMarkPattern.trim() !== "" ? new RegExp(self.excludeMarkPattern) : null; // Resource filter
+      var includeRegex = self.includeDomainPattern && self.includeDomainPattern.trim() !== "" ? new RegExp(self.includeDomainPattern, 'i') : null;
+      var excludeRegex = self.excludeDomainPattern && self.excludeDomainPattern.trim() !== "" ? new RegExp(self.excludeDomainPattern, 'i') : null;
+      var includeMarkRegex = self.includeMarkPattern && self.includeMarkPattern.trim() !== "" ? new RegExp(self.includeMarkPattern, 'i') : null;
+      var excludeMarkRegex = self.excludeMarkPattern && self.excludeMarkPattern.trim() !== "" ? new RegExp(self.excludeMarkPattern, 'i') : null; // Resource filter
 
       var chartData = self.getChartData(function (resource) {
         return (self.domain === "all" || resource.domain === self.domain) && resource.startTime >= startTimeInMs && (!endTimeLimitInMs || resource.startTime <= endTimeLimitInMs) && (!includeRegex || includeRegex.exec(resource.name)) && (!excludeRegex || !excludeRegex.exec(resource.name));
@@ -393,7 +393,12 @@ function () {
 
       var configPanel = _dom["default"].newTag("div", {
         "class": "config-panel",
-        style: "margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 4px; display: flex; justify-content: flex-end; gap: 10px; align-items: center;"
+        style: "margin-bottom: 15px; padding: 10px; background: #f5f5f5; border-radius: 4px; display: flex; flex-direction: column; gap: 10px;"
+      }); // Create top row for basic controls
+
+
+      var topRow = _dom["default"].newTag("div", {
+        style: "display: flex; justify-content: flex-end; gap: 10px; align-items: center;"
       }); // Domain selector
 
 
@@ -420,7 +425,7 @@ function () {
           }));
         });
 
-        configPanel.appendChild(selectBox);
+        topRow.appendChild(selectBox);
       } // Add start time selector
 
 
@@ -442,7 +447,7 @@ function () {
         }
       });
 
-      configPanel.appendChild(startTimeSelector); // Add end time selector
+      topRow.appendChild(startTimeSelector); // Add end time selector
 
       var endTimeSelector = _dom["default"].newTag("input", {
         "class": "end-time-selector",
@@ -462,7 +467,7 @@ function () {
         }
       });
 
-      configPanel.appendChild(endTimeSelector); // Add mark from selector
+      topRow.appendChild(endTimeSelector); // Add mark from selector
 
       var markFromSelector = _dom["default"].newTag("input", {
         "class": "mark-from-selector",
@@ -482,7 +487,13 @@ function () {
         }
       });
 
-      configPanel.appendChild(markFromSelector); // Add include pattern editor
+      topRow.appendChild(markFromSelector);
+      configPanel.appendChild(topRow); // Create pattern editors row
+
+      var patternRow = _dom["default"].newTag("div", {
+        style: "display: flex; justify-content: flex-end; gap: 10px; align-items: center;"
+      }); // Add include pattern editor
+
 
       var includeDomainPatternEditor = _dom["default"].newTag("textarea", {
         "class": "include-pattern-editor",
@@ -500,7 +511,7 @@ function () {
       });
 
       includeDomainPatternEditor.textContent = self.includeDomainPattern;
-      configPanel.appendChild(includeDomainPatternEditor); // Add exclude pattern editor
+      patternRow.appendChild(includeDomainPatternEditor); // Add exclude pattern editor
 
       var excludeDomainPatternEditor = _dom["default"].newTag("textarea", {
         "class": "exclude-pattern-editor",
@@ -518,7 +529,7 @@ function () {
       });
 
       excludeDomainPatternEditor.textContent = self.excludeDomainPattern;
-      configPanel.appendChild(excludeDomainPatternEditor); // Add mark include pattern editor
+      patternRow.appendChild(excludeDomainPatternEditor); // Add mark include pattern editor
 
       var includeMarkPatternEditor = _dom["default"].newTag("textarea", {
         "class": "include-mark-pattern-editor",
@@ -536,7 +547,7 @@ function () {
       });
 
       includeMarkPatternEditor.textContent = self.includeMarkPattern;
-      configPanel.appendChild(includeMarkPatternEditor); // Add mark exclude pattern editor
+      patternRow.appendChild(includeMarkPatternEditor); // Add mark exclude pattern editor
 
       var excludeMarkPatternEditor = _dom["default"].newTag("textarea", {
         "class": "exclude-mark-pattern-editor",
@@ -554,7 +565,8 @@ function () {
       });
 
       excludeMarkPatternEditor.textContent = self.excludeMarkPattern;
-      configPanel.appendChild(excludeMarkPatternEditor); // Insert the config panel before the chart
+      patternRow.appendChild(excludeMarkPatternEditor);
+      configPanel.appendChild(patternRow); // Insert the config panel before the chart
 
       chartSvg.parentNode.insertBefore(configPanel, chartSvg);
       return chartHolder;
