@@ -242,7 +242,11 @@ waterfall.setupTimeLine = (startTimeAdjustment, durationMs, blocks, marks, lines
 		const y = 25 * i;
 		timeLineHolder.appendChild(createRect(blockWidth, 25, block.start ? block.start - startTimeAdjustmentInMs : 0.001, y, block.cssClass, block.name + " (" + block.start + "ms - " + block.end + "ms | total: " + block.total + "ms)", block.segments));
 
-		const blockLabel = svg.newTextEl(block.name + " (" + Math.round(block.total) + "ms)", (y + (block.segments? 20 : 17)));
+		// Check if resource name matches highlight pattern
+		const highlightResourceRegex = window.highlightResourceRegex;
+		const highlighted = highlightResourceRegex && highlightResourceRegex.test(block.name);
+
+		const blockLabel = svg.newTextEl(block.name + " (" + Math.round(block.total) + "ms)", (y + (block.segments? 20 : 17)), undefined, highlighted);
 
         const x = ((block.start ? block.start - startTimeAdjustmentInMs : 0.001) / unit);
 		if(((block.total||1) / unit) > 10 && svg.getNodeTextWidth(blockLabel) < 200){

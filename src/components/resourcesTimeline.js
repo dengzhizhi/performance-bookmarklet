@@ -17,6 +17,7 @@ class ResourceTimelineComponent {
         this.excludeMarkPattern = options.excludeMarkPattern || "";
         this.includeMarkPattern = options.includeMarkPattern || "";
         this.highlightMarkPattern = options.highlightMarkPattern || "";
+        this.highlightResourcePattern = options.highlightResourcePattern || "";
         this.maxTime = (options.maxTime || (5 * 60)) * 1000; // default to 5 minutes, timeline could be messy, use time filters to zoom in
     }
 
@@ -145,6 +146,9 @@ class ResourceTimelineComponent {
         const highlightMarkRegex = (self.highlightMarkPattern && self.highlightMarkPattern.trim() !== "")
             ? new RegExp(self.highlightMarkPattern, 'i')
             : null;
+        const highlightResourceRegex = (self.highlightResourcePattern && self.highlightResourcePattern.trim() !== "")
+            ? new RegExp(self.highlightResourcePattern, 'i')
+            : null;
         // Resource filter
         const chartData = self.getChartData((resource) =>
             (self.domain === "all" || resource.domain === self.domain) &&
@@ -156,6 +160,7 @@ class ResourceTimelineComponent {
         const endTimeInMs = startTimeInMs + chartData.loadDuration;
         // Pass highlight pattern regex to window object
         window.highlightMarkRegex = highlightMarkRegex;
+        window.highlightResourceRegex = highlightResourceRegex;
         const tempChartHolder = waterfall.setupTimeLine(
             self.startTime,
             chartData.loadDuration,
@@ -323,6 +328,24 @@ class ResourceTimelineComponent {
         excludeDomainPatternEditor.textContent = self.excludeDomainPattern;
         patternRow.appendChild(excludeDomainPatternEditor);
 
+        // Add highlight resource pattern editor
+        const highlightResourcePatternEditor = dom.newTag("textarea", {
+            class: "highlight-resource-pattern-editor",
+            placeholder: "Resource highlight pattern",
+            value: self.highlightResourcePattern,
+            style: "width: 150px; min-height: 20px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; resize: none; overflow: hidden;",
+            oninput: (e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = (e.target.scrollHeight) + 'px';
+            },
+            onblur: (e) => {
+                self.highlightResourcePattern = e.target.value.trim() || "";
+                self.refreshSVG(chartHolder);
+            }
+        });
+        highlightResourcePatternEditor.textContent = self.highlightResourcePattern;
+        patternRow.appendChild(highlightResourcePatternEditor);
+
         // Add mark include pattern editor
         const includeMarkPatternEditor = dom.newTag("textarea", {
             class: "include-mark-pattern-editor",
@@ -359,7 +382,7 @@ class ResourceTimelineComponent {
         excludeMarkPatternEditor.textContent = self.excludeMarkPattern;
         patternRow.appendChild(excludeMarkPatternEditor);
 
-        // Add highlight pattern editor
+        // Add highlight mark pattern editor
         const highlightMarkPatternEditor = dom.newTag("textarea", {
             class: "highlight-mark-pattern-editor",
             placeholder: "Marks highlight pattern",

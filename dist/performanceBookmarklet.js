@@ -329,6 +329,7 @@ function () {
     this.excludeMarkPattern = options.excludeMarkPattern || "";
     this.includeMarkPattern = options.includeMarkPattern || "";
     this.highlightMarkPattern = options.highlightMarkPattern || "";
+    this.highlightResourcePattern = options.highlightResourcePattern || "";
     this.maxTime = (options.maxTime || 5 * 60) * 1000; // default to 5 minutes, timeline could be messy, use time filters to zoom in
   }
   /**
@@ -428,7 +429,8 @@ function () {
       var excludeRegex = self.excludeDomainPattern && self.excludeDomainPattern.trim() !== "" ? new RegExp(self.excludeDomainPattern, 'i') : null;
       var includeMarkRegex = self.includeMarkPattern && self.includeMarkPattern.trim() !== "" ? new RegExp(self.includeMarkPattern, 'i') : null;
       var excludeMarkRegex = self.excludeMarkPattern && self.excludeMarkPattern.trim() !== "" ? new RegExp(self.excludeMarkPattern, 'i') : null;
-      var highlightMarkRegex = self.highlightMarkPattern && self.highlightMarkPattern.trim() !== "" ? new RegExp(self.highlightMarkPattern, 'i') : null; // Resource filter
+      var highlightMarkRegex = self.highlightMarkPattern && self.highlightMarkPattern.trim() !== "" ? new RegExp(self.highlightMarkPattern, 'i') : null;
+      var highlightResourceRegex = self.highlightResourcePattern && self.highlightResourcePattern.trim() !== "" ? new RegExp(self.highlightResourcePattern, 'i') : null; // Resource filter
 
       var chartData = self.getChartData(function (resource) {
         return (self.domain === "all" || resource.domain === self.domain) && resource.startTime >= startTimeInMs && (!endTimeLimitInMs || resource.startTime <= endTimeLimitInMs) && (!includeRegex || includeRegex.exec(resource.name)) && (!excludeRegex || !excludeRegex.exec(resource.name));
@@ -436,6 +438,7 @@ function () {
       var endTimeInMs = startTimeInMs + chartData.loadDuration; // Pass highlight pattern regex to window object
 
       window.highlightMarkRegex = highlightMarkRegex;
+      window.highlightResourceRegex = highlightResourceRegex;
 
       var tempChartHolder = _waterfall["default"].setupTimeLine(self.startTime, chartData.loadDuration, chartData.blocks, // Mark filter
       _data["default"].marks.filter(function (it) {
@@ -594,7 +597,25 @@ function () {
       });
 
       excludeDomainPatternEditor.textContent = self.excludeDomainPattern;
-      patternRow.appendChild(excludeDomainPatternEditor); // Add mark include pattern editor
+      patternRow.appendChild(excludeDomainPatternEditor); // Add highlight resource pattern editor
+
+      var highlightResourcePatternEditor = _dom["default"].newTag("textarea", {
+        "class": "highlight-resource-pattern-editor",
+        placeholder: "Resource highlight pattern",
+        value: self.highlightResourcePattern,
+        style: "width: 150px; min-height: 20px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; resize: none; overflow: hidden;",
+        oninput: function oninput(e) {
+          e.target.style.height = 'auto';
+          e.target.style.height = e.target.scrollHeight + 'px';
+        },
+        onblur: function onblur(e) {
+          self.highlightResourcePattern = e.target.value.trim() || "";
+          self.refreshSVG(chartHolder);
+        }
+      });
+
+      highlightResourcePatternEditor.textContent = self.highlightResourcePattern;
+      patternRow.appendChild(highlightResourcePatternEditor); // Add mark include pattern editor
 
       var includeMarkPatternEditor = _dom["default"].newTag("textarea", {
         "class": "include-mark-pattern-editor",
@@ -630,7 +651,7 @@ function () {
       });
 
       excludeMarkPatternEditor.textContent = self.excludeMarkPattern;
-      patternRow.appendChild(excludeMarkPatternEditor); // Add highlight pattern editor
+      patternRow.appendChild(excludeMarkPatternEditor); // Add highlight mark pattern editor
 
       var highlightMarkPatternEditor = _dom["default"].newTag("textarea", {
         "class": "highlight-mark-pattern-editor",
@@ -1905,9 +1926,12 @@ waterfall.setupTimeLine = function (startTimeAdjustment, durationMs, blocks, mar
   barsToShow.forEach(function (block, i) {
     var blockWidth = block.total || 1;
     var y = 25 * i;
-    timeLineHolder.appendChild(createRect(blockWidth, 25, block.start ? block.start - startTimeAdjustmentInMs : 0.001, y, block.cssClass, block.name + " (" + block.start + "ms - " + block.end + "ms | total: " + block.total + "ms)", block.segments));
+    timeLineHolder.appendChild(createRect(blockWidth, 25, block.start ? block.start - startTimeAdjustmentInMs : 0.001, y, block.cssClass, block.name + " (" + block.start + "ms - " + block.end + "ms | total: " + block.total + "ms)", block.segments)); // Check if resource name matches highlight pattern
 
-    var blockLabel = _svg["default"].newTextEl(block.name + " (" + Math.round(block.total) + "ms)", y + (block.segments ? 20 : 17));
+    var highlightResourceRegex = window.highlightResourceRegex;
+    var highlighted = highlightResourceRegex && highlightResourceRegex.test(block.name);
+
+    var blockLabel = _svg["default"].newTextEl(block.name + " (" + Math.round(block.total) + "ms)", y + (block.segments ? 20 : 17), undefined, highlighted);
 
     var x = (block.start ? block.start - startTimeAdjustmentInMs : 0.001) / unit;
 
