@@ -267,6 +267,7 @@ function () {
     this.includeDomainPattern = options.includeDomainPattern || "";
     this.excludeMarkPattern = options.excludeMarkPattern || "";
     this.includeMarkPattern = options.includeMarkPattern || "";
+    this.highlightMarkPattern = options.highlightMarkPattern || "";
     this.maxTime = (options.maxTime || 5 * 60) * 1000; // default to 5 minutes, timeline could be messy, use time filters to zoom in
   }
   /**
@@ -365,12 +366,15 @@ function () {
       var includeRegex = self.includeDomainPattern && self.includeDomainPattern.trim() !== "" ? new RegExp(self.includeDomainPattern, 'i') : null;
       var excludeRegex = self.excludeDomainPattern && self.excludeDomainPattern.trim() !== "" ? new RegExp(self.excludeDomainPattern, 'i') : null;
       var includeMarkRegex = self.includeMarkPattern && self.includeMarkPattern.trim() !== "" ? new RegExp(self.includeMarkPattern, 'i') : null;
-      var excludeMarkRegex = self.excludeMarkPattern && self.excludeMarkPattern.trim() !== "" ? new RegExp(self.excludeMarkPattern, 'i') : null; // Resource filter
+      var excludeMarkRegex = self.excludeMarkPattern && self.excludeMarkPattern.trim() !== "" ? new RegExp(self.excludeMarkPattern, 'i') : null;
+      var highlightMarkRegex = self.highlightMarkPattern && self.highlightMarkPattern.trim() !== "" ? new RegExp(self.highlightMarkPattern, 'i') : null; // Resource filter
 
       var chartData = self.getChartData(function (resource) {
         return (self.domain === "all" || resource.domain === self.domain) && resource.startTime >= startTimeInMs && (!endTimeLimitInMs || resource.startTime <= endTimeLimitInMs) && (!includeRegex || includeRegex.exec(resource.name)) && (!excludeRegex || !excludeRegex.exec(resource.name));
       });
-      var endTimeInMs = startTimeInMs + chartData.loadDuration;
+      var endTimeInMs = startTimeInMs + chartData.loadDuration; // Pass highlight pattern regex to window object
+
+      window.highlightMarkRegex = highlightMarkRegex;
 
       var tempChartHolder = _waterfall["default"].setupTimeLine(self.startTime, chartData.loadDuration, chartData.blocks, // Mark filter
       _data["default"].marks.filter(function (it) {
@@ -565,7 +569,25 @@ function () {
       });
 
       excludeMarkPatternEditor.textContent = self.excludeMarkPattern;
-      patternRow.appendChild(excludeMarkPatternEditor);
+      patternRow.appendChild(excludeMarkPatternEditor); // Add highlight pattern editor
+
+      var highlightMarkPatternEditor = _dom["default"].newTag("textarea", {
+        "class": "highlight-mark-pattern-editor",
+        placeholder: "Marks highlight pattern",
+        value: self.highlightMarkPattern,
+        style: "width: 150px; min-height: 20px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; resize: none; overflow: hidden;",
+        oninput: function oninput(e) {
+          e.target.style.height = 'auto';
+          e.target.style.height = e.target.scrollHeight + 'px';
+        },
+        onblur: function onblur(e) {
+          self.highlightMarkPattern = e.target.value.trim() || "";
+          self.refreshSVG(chartHolder);
+        }
+      });
+
+      highlightMarkPatternEditor.textContent = self.highlightMarkPattern;
+      patternRow.appendChild(highlightMarkPatternEditor);
       configPanel.appendChild(patternRow); // Insert the config panel before the chart
 
       chartSvg.parentNode.insertBefore(configPanel, chartSvg);
@@ -1398,11 +1420,13 @@ var newEl = function newEl(tagName, settings, css) {
 
 
 var newTextEl = function newTextEl(text, y, css) {
+  var highlighted = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
+  var defaultShadowColor = highlighted ? "#AACAFE" : "#fff";
   return newEl("text", {
-    fill: "#111",
+    fill: highlighted ? "darkblue" : "#111",
     y: y,
     text: text
-  }, (css || "") + " text-shadow:0 0 4px #fff;");
+  }, (css || "") + " text-shadow:0 0 4px " + defaultShadowColor + ";");
 };
 /**
  * Calculates the with of a SVG `text` element
@@ -1666,9 +1690,12 @@ waterfall.setupTimeLine = function (startTimeAdjustment, durationMs, blocks, mar
         x: x + "%"
       });
 
-      mark.x = x;
+      mark.x = x; // Add highlight class if the resource name matches the pattern
 
-      var lineLabel = _svg["default"].newTextEl(mark.name + " ::::: (" + Math.round(mark.startTime) + "ms)", diagramHeight + 25); //lineLabel.setAttribute("writing-mode", "tb");
+      var highlightMarkRegex = window.highlightMarkRegex;
+      var highlighted = highlightMarkRegex && highlightMarkRegex.test(mark.name);
+
+      var lineLabel = _svg["default"].newTextEl(mark.name + " ::::: (" + Math.round(mark.startTime) + "ms)", diagramHeight + 25, undefined, highlighted); //lineLabel.setAttribute("writing-mode", "tb");
 
 
       lineLabel.setAttribute("x", x + "%");

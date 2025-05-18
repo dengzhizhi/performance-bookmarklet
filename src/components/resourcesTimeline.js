@@ -16,6 +16,7 @@ class ResourceTimelineComponent {
         this.includeDomainPattern = options.includeDomainPattern || "";
         this.excludeMarkPattern = options.excludeMarkPattern || "";
         this.includeMarkPattern = options.includeMarkPattern || "";
+        this.highlightMarkPattern = options.highlightMarkPattern || "";
         this.maxTime = (options.maxTime || (5 * 60)) * 1000; // default to 5 minutes, timeline could be messy, use time filters to zoom in
     }
 
@@ -141,6 +142,9 @@ class ResourceTimelineComponent {
         const excludeMarkRegex = (self.excludeMarkPattern && self.excludeMarkPattern.trim() !== "")
             ? new RegExp(self.excludeMarkPattern, 'i')
             : null;
+        const highlightMarkRegex = (self.highlightMarkPattern && self.highlightMarkPattern.trim() !== "")
+            ? new RegExp(self.highlightMarkPattern, 'i')
+            : null;
         // Resource filter
         const chartData = self.getChartData((resource) =>
             (self.domain === "all" || resource.domain === self.domain) &&
@@ -150,6 +154,8 @@ class ResourceTimelineComponent {
             (!excludeRegex || !excludeRegex.exec(resource.name))
         );
         const endTimeInMs = startTimeInMs + chartData.loadDuration;
+        // Pass highlight pattern regex to window object
+        window.highlightMarkRegex = highlightMarkRegex;
         const tempChartHolder = waterfall.setupTimeLine(
             self.startTime,
             chartData.loadDuration,
@@ -352,6 +358,24 @@ class ResourceTimelineComponent {
         });
         excludeMarkPatternEditor.textContent = self.excludeMarkPattern;
         patternRow.appendChild(excludeMarkPatternEditor);
+
+        // Add highlight pattern editor
+        const highlightMarkPatternEditor = dom.newTag("textarea", {
+            class: "highlight-mark-pattern-editor",
+            placeholder: "Marks highlight pattern",
+            value: self.highlightMarkPattern,
+            style: "width: 150px; min-height: 20px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; resize: none; overflow: hidden;",
+            oninput: (e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = (e.target.scrollHeight) + 'px';
+            },
+            onblur: (e) => {
+                self.highlightMarkPattern = e.target.value.trim() || "";
+                self.refreshSVG(chartHolder);
+            }
+        });
+        highlightMarkPatternEditor.textContent = self.highlightMarkPattern;
+        patternRow.appendChild(highlightMarkPatternEditor);
 
         configPanel.appendChild(patternRow);
 

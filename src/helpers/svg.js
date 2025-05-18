@@ -33,12 +33,13 @@ const newEl = (tagName, settings, css) => {
  * @param  {string} css
  * @returns {SVGTextElement}
  */
-const newTextEl = (text, y, css) => {
+const newTextEl = (text, y, css, highlighted = false) => {
+	const defaultShadowColor = highlighted ? "#AACAFE" : "#fff";
 	return newEl("text", {
-			fill : "#111",
+			fill : highlighted ? "darkblue" : "#111",
 			y : y,
 			text : text
-		}, (css||"") + " text-shadow:0 0 4px #fff;");
+		}, (css||"") + " text-shadow:0 0 4px " + defaultShadowColor + ";");
 };
 
 /**

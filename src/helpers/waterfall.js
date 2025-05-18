@@ -170,11 +170,14 @@ waterfall.setupTimeLine = (startTimeAdjustment, durationMs, blocks, marks, lines
 				x : x + "%"
 			});
 			mark.x = x;
-			const lineLabel = svg.newTextEl(mark.name + " ::::: (" + Math.round(mark.startTime) + "ms)",  diagramHeight + 25 );
+			// Add highlight class if the resource name matches the pattern
+			const highlightMarkRegex = window.highlightMarkRegex;
+			const highlighted = highlightMarkRegex && highlightMarkRegex.test(mark.name);
+
+			const lineLabel = svg.newTextEl(mark.name + " ::::: (" + Math.round(mark.startTime) + "ms)",  diagramHeight + 25, undefined, highlighted);
 			//lineLabel.setAttribute("writing-mode", "tb");
 			lineLabel.setAttribute("x", x + "%");
 			lineLabel.setAttribute("stroke", "");
-
 
 			lineHolder.appendChild(svg.newEl("line", {
 				x1 : x + "%",
